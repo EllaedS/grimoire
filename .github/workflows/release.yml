@@ -1,24 +1,45 @@
 name: Release
 
+# Publie une release Windows à chaque push sur main dont la version (package.json) n'a pas encore de release.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Version à publier
+        id: v
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          V=$(node -p "require('./package.json').version")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if gh release view "v$V" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"; echo "La release v$V existe déjà : rien à publier."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v4
+        if: steps.v.outputs.exists == 'false'
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      - if: steps.v.outputs.exists == 'false'
+        run: npm ci
       - name: Build et publication de l'installeur
+        if: steps.v.outputs.exists == 'false'
         run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

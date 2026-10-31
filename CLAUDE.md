@@ -16,5 +16,5 @@ Utilisateur : Fred. Outil de gestion de collection/decks MTG.
 
 ## Release
 1. `version` +1 dans `package.json`
-2. commit, `git tag vX.Y.Z`, `git push --follow-tags`
+2. commit + `git push` sur `main` (pas de tag : le proxy des sessions Claude bloque les tags)
 3. GitHub Actions (`.github/workflows/release.yml`, windows-latest) construit `Grimoire-Setup-X.Y.Z.exe` + `latest.yml` et publie la release ; electron-updater côté app télécharge et propose « Redémarrer ».

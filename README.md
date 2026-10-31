@@ -22,4 +22,4 @@ npm start          # lance l'app en local
 npm run dist       # construit l'installeur dans dist/
 ```
 
-Publier une version : augmenter `version` dans `package.json`, committer, puis pousser un tag `vX.Y.Z`. Le workflow GitHub Actions construit l'installeur Windows et le publie dans les Releases.
+Publier une version : augmenter `version` dans `package.json`, committer et pousser sur `main`. Le workflow GitHub Actions construit l'installeur Windows et le publie dans les Releases.
