@@ -2,6 +2,9 @@
 
 Utilisateur : Fred. Outil de gestion de collection/decks MTG.
 
+- Dépôt : https://github.com/EllaedS/grimoire (public). Copie locale de Fred : `C:\Dev\grimoire`.
+- Ancien projet (scripts PowerShell, viewer, base de connaissances) : `C:\Claude\MTG` — référence uniquement.
+
 ## Deux surfaces, une seule source
 - `web/index.html` est LA source de la page. Elle tourne :
   1. dans l'app Electron (ce dépôt) : `window.grimoireLocal` existe (`S.local=true`) → images Scryfall, enrichissement direct via `/cards/collection`, mises à jour auto ;
