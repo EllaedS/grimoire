@@ -1,0 +1,813 @@
+<meta charset="utf-8">
+<title>Grimoire MTG</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a card-table workspace — slim top bar, one working column, deck pages split into list + side panel on wide screens. */
+:root{
+  --bg:#eceef1; --surface:#ffffff; --surface2:#f5f6f8; --ink:#1a1e24; --muted:#5b6470; --line:#d6dbe1;
+  --accent:#2c4f9e; --accent-ink:#ffffff; --gold:#a8791f;
+  --ok:#2c7a49; --warn:#a86a12; --bad:#b23a2e; --okbg:#e3f1e8; --warnbg:#f7ecd9; --badbg:#f6e1de;
+  --mw:#efe8c4; --mu:#2b74bf; --mb:#3a3330; --mr:#cf4430; --mg:#2d8a4f; --mc:#b6b0a8; --mn:#cfcbc4; --mink:#1a1e24;
+  --f-display:"Cinzel","Trajan Pro",Georgia,serif; --f-body:"Alegreya Sans","Segoe UI",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111317; --surface:#191c22; --surface2:#20242b; --ink:#e6e8eb; --muted:#9aa3ae; --line:#2d323b;
+  --accent:#8aa6ff; --accent-ink:#0f1320; --gold:#d6a94a;
+  --ok:#5fc283; --warn:#e2a548; --bad:#ef7b6e; --okbg:#173023; --warnbg:#33270f; --badbg:#3a1d1a;
+  --mw:#e9e1b8; --mu:#4f97e0; --mb:#5a514c; --mr:#e0614c; --mg:#45a866; --mc:#8e8981; --mn:#6b6760; --mink:#111317; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111317; --surface:#191c22; --surface2:#20242b; --ink:#e6e8eb; --muted:#9aa3ae; --line:#2d323b;
+  --accent:#8aa6ff; --accent-ink:#0f1320; --gold:#d6a94a;
+  --ok:#5fc283; --warn:#e2a548; --bad:#ef7b6e; --okbg:#173023; --warnbg:#33270f; --badbg:#3a1d1a;
+  --mw:#e9e1b8; --mu:#4f97e0; --mb:#5a514c; --mr:#e0614c; --mg:#45a866; --mc:#8e8981; --mn:#6b6760; --mink:#111317; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:14px;padding-block:10px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:700;letter-spacing:.06em;font-size:1.15rem;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink)}
+.brand .pent{display:inline-flex;gap:2px}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap}
+nav.tabs a{padding:6px 12px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:500}
+nav.tabs a[aria-current="page"]{background:var(--surface2);color:var(--ink)}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 13px;border-radius:8px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.small{padding:4px 9px;font-size:.85rem}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+main{padding-block:20px 60px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-family:var(--f-display);font-weight:700;font-size:1.7rem;letter-spacing:.03em}
+h2{font-family:var(--f-display);font-weight:500;font-size:1.15rem;letter-spacing:.04em}
+h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.muted{color:var(--muted)}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.panel>h3{margin-bottom:10px}
+.statusbar{display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.statusbar .k{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.statusbar .v{font-family:var(--f-mono);font-size:1.05rem}
+.alert{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface)}
+.alert.warn{background:var(--warnbg);border-color:transparent}
+.alert.bad{background:var(--badbg);border-color:transparent}
+.alert.ok{background:var(--okbg);border-color:transparent}
+.alert .grow{flex:1;min-width:0}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;padding:2px 8px;border-radius:999px;background:var(--surface2);color:var(--muted);white-space:nowrap;font-weight:500}
+.pill.ok{background:var(--okbg);color:var(--ok)} .pill.warn{background:var(--warnbg);color:var(--warn)} .pill.bad{background:var(--badbg);color:var(--bad)} .pill.acc{background:var(--accent);color:var(--accent-ink)}
+/* mana symbols */
+.ms{display:inline-flex;align-items:center;justify-content:center;width:1.25em;height:1.25em;border-radius:50%;font-style:normal;font-family:var(--f-mono);font-size:.72em;font-weight:500;vertical-align:-.15em;margin:0 1px;border:1px solid rgba(0,0,0,.18);color:#fff;line-height:1}
+.ms-w{background:var(--mw);color:#3b341c}.ms-u{background:var(--mu)}.ms-b{background:var(--mb)}.ms-r{background:var(--mr)}.ms-g{background:var(--mg)}.ms-c{background:var(--mc);color:#222}.ms-n{background:var(--mn);color:var(--mink)}
+.ms-h{background:linear-gradient(135deg,var(--a) 50%,var(--b) 50%)}
+.ms-t{background:var(--mn);color:var(--mink)}
+/* deck grid */
+.grid-decks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.deckcard{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.deckcard:hover{border-color:var(--muted)}
+.deckcard .frame{position:absolute;inset:0 0 auto 0;height:5px}
+.deckcard .nm{font-family:var(--f-display);font-weight:700;font-size:1.1rem;letter-spacing:.03em}
+.deckcard .cm{color:var(--muted);font-size:.9rem;min-height:1.3em}
+.deckcard .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+/* deck page */
+.deckhead{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.deckhead .grow{flex:1;min-width:240px}
+.deckhead .crumbs{font-size:.85rem}
+.deckgrid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+@media (max-width:900px){.deckgrid{grid-template-columns:minmax(0,1fr)}}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.kpi{background:var(--surface2);border-radius:8px;padding:8px 10px}
+.kpi .k{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.kpi .v{font-family:var(--f-mono);font-size:1.15rem}
+.catblock{margin-top:14px}
+.catblock h3{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:2px}
+.cardrow{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;gap:8px;align-items:center;padding:4px 6px;border-radius:6px;cursor:pointer;width:100%;border:0;background:none;text-align:left}
+.cardrow:hover{background:var(--surface2)}
+.cardrow .q{font-family:var(--f-mono);color:var(--muted)}
+.cardrow .n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cardrow .n small{color:var(--muted);margin-left:6px}
+.cardrow .flag{color:var(--warn);font-size:.8rem;margin-left:6px}
+.bars{display:flex;align-items:flex-end;gap:6px;height:84px;padding-top:4px}
+.bars .b{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.bars .b i{display:block;width:100%;background:var(--accent);border-radius:4px 4px 0 0;opacity:.85}
+.bars .b span{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.colorrow{display:grid;grid-template-columns:1.6em minmax(0,1fr) 7.5em;gap:8px;align-items:center;margin:6px 0;font-size:.85rem}
+.meter{height:8px;background:var(--surface2);border-radius:4px;position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.meter.src i{opacity:.55}
+textarea.edit{width:100%;min-height:120px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);resize:vertical;line-height:1.5}
+.prose{white-space:pre-wrap;line-height:1.55;max-width:75ch}
+.prose.clamp{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+/* swaps */
+.swap{display:flex;flex-direction:column;gap:5px;padding:10px 0;border-top:1px solid var(--line)}
+.swap .st{display:flex;gap:4px;align-items:center}
+.swap:first-of-type{border-top:0}
+.swap .pair{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}
+.swap .pair .out{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--bad)}
+.swap .pair .arrow{color:var(--muted)}
+.swap .pair button{border:0;background:none;padding:0;cursor:pointer;text-align:left;font-weight:500}
+.swap .why{font-size:.88rem;color:var(--muted);line-height:1.45}
+.swap .why.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:5px 10px;cursor:pointer;font-size:.85rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface2);color:var(--ink);font-weight:700}
+/* collection */
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filters input[type=search]{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.filters select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.colorpick{display:inline-flex;gap:4px}
+.colorpick button{border:2px solid transparent;background:none;border-radius:50%;padding:1px;cursor:pointer;font-size:1.1rem;line-height:0}
+.colorpick button[aria-pressed="true"]{border-color:var(--ink)}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.tile{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px 10px 15px;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-width:0;overflow:hidden}
+.tile:hover{border-color:var(--muted)}
+.tile .edge{position:absolute;inset:0 auto 0 0;width:5px}
+.tile .tt{display:flex;justify-content:space-between;gap:6px;align-items:flex-start}
+.tile .tn{font-weight:700;line-height:1.2;min-width:0}
+.tile .tt>span:last-child,.nowrap{white-space:nowrap;flex-shrink:0}
+.tile .tn small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
+.tile .ty{font-size:.78rem;color:var(--muted)}
+.tile .to{font-size:.8rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tile .tf{display:flex;gap:6px;align-items:center;font-size:.75rem;color:var(--muted);margin-top:auto;padding-top:4px;flex-wrap:wrap}
+.imggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;margin-top:8px}
+.imgcard{position:relative;border:0;padding:0;background:none;cursor:pointer;border-radius:6%/4.3%}
+.imgcard img,.tile .cimg{width:100%;aspect-ratio:488/680;border-radius:6%/4.3%;display:block;background:var(--surface2);object-fit:cover}
+.imgcard .qb{position:absolute;top:8%;left:6%;background:var(--ink);color:var(--bg);font-family:var(--f-mono);padding:1px 7px;border-radius:999px;font-size:.8rem}
+.grid-cards.img{grid-template-columns:repeat(auto-fill,minmax(176px,1fr))}
+.bigimg{width:min(320px,100%);align-self:center;border-radius:4.7%/3.4%}
+.rar{width:.6em;height:.6em;border-radius:50%;display:inline-block;background:var(--mc)}
+.rar.uncommon{background:#8ea3b3}.rar.rare{background:var(--gold)}.rar.mythic{background:#d4552a}
+.pager{display:flex;gap:6px;justify-content:center;align-items:center;margin-top:16px}
+/* tables */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);cursor:pointer;white-space:nowrap}
+td.num,th.num{text-align:right}
+/* dialogs */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(720px,calc(100vw - 32px));max-height:calc(100vh - 48px)}
+dialog::backdrop{background:rgba(10,12,16,.45)}
+dialog .dh{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1}
+dialog .dh h2{flex:1;min-width:0}
+dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.8rem;color:var(--muted);font-weight:500}
+.field input,.field select,.field textarea{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.two{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:28px;text-align:center;cursor:pointer;background:var(--surface2)}
+.drop.over{border-color:var(--accent)}
+.oracle{white-space:pre-wrap;line-height:1.5;background:var(--surface2);padding:12px;border-radius:8px}
+.progress{height:10px;background:var(--surface2);border-radius:5px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:5px}
+@media (prefers-reduced-motion:no-preference){.progress i{transition:width .3s ease}}
+.log{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);max-height:160px;overflow:auto;background:var(--surface2);padding:8px 10px;border-radius:8px;white-space:pre-wrap}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:50;max-width:calc(100vw - 32px);box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.steps div{background:var(--surface2);border-radius:8px;padding:12px}
+.steps b{display:block;margin-bottom:4px}
+details summary{cursor:pointer;color:var(--muted);font-size:.9rem}
+@media (prefers-reduced-motion:no-preference){.deckcard,.tile,.btn{transition:border-color .15s}}
+</style>
+
+<header class="top"><div class="wrap">
+  <a class="brand" href="#decks"><span class="pent" aria-hidden="true"><i class="ms ms-w">W</i><i class="ms ms-u">U</i><i class="ms ms-b">B</i><i class="ms ms-r">R</i><i class="ms ms-g">G</i></span>Grimoire</a>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#decks" data-nav="decks">Decks</a>
+    <a href="#collection" data-nav="collection">Collection</a>
+    <a href="#offres" data-nav="offres">Offres</a>
+  </nav>
+  <span class="spacer"></span>
+  <button class="btn primary" id="btn-import" type="button">Importer un CSV</button>
+</div></header>
+
+<main class="wrap" id="app"><div class="empty">Chargement de la collection…</div></main>
+
+<dialog id="dlg"><div class="dh"><h2 id="dlg-title"></h2><button class="btn ghost" type="button" id="dlg-close" aria-label="Fermer">✕</button></div><div class="db" id="dlg-body"></div></dialog>
+<input type="file" id="file-input" accept=".csv,.json,text/csv,application/json" hidden>
+
+<script>
+"use strict";
+/* ================= state ================= */
+const S={cards:{},extra:{},nameIdx:new Map(),coll:null,csvId:null,state:null,decks:{},swaps:{},offres:null,
+  local:!!window.grimoireLocal,db:null,assets:null,user:null,sample:null,mcp:null,canWrite:false,ready:{cards:false,decks:false,swaps:false,state:false},
+  ui:{coll:{q:'',colors:[],type:'',rarity:'',cont:'',fmt:'',avail:false,sort:'name',page:1},offres:{type:'all',sort:'price_per_card',dir:1,q:''},swapView:{},deckView:'text'}};
+const BASICS=/^(snow-covered )?(plains|island|swamp|mountain|forest|wastes)$/;
+const COLORS=['W','U','B','R','G'];
+const CNAME={W:'Blanc',U:'Bleu',B:'Noir',R:'Rouge',G:'Vert',C:'Incolore'};
+const CATS=['Commandant','Créature','Planeswalker','Éphémère','Rituel','Artéfact','Enchantement','Bataille','Terrain','Autre'];
+const CATL={Commandant:'Commandant','Créature':'Créatures',Planeswalker:'Planeswalkers','Éphémère':'Éphémères',Rituel:'Rituels','Artéfact':'Artéfacts',Enchantement:'Enchantements',Bataille:'Batailles',Terrain:'Terrains',Autre:'Autres'};
+
+/* ================= utils ================= */
+const $=s=>document.querySelector(s);
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function norm(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[’‘`]/g,"'").toLowerCase().replace(/\s+/g,' ').trim()}
+function front(s){return String(s||'').split(' // ')[0]}
+function isBasic(en){return BASICS.test(norm(en))}
+function slug(s){return norm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||('deck-'+Date.now().toString(36))}
+function docIdForKey(k){return k.replace(/\|/g,'~').replace(/[^A-Za-z0-9_\-.~:@+]/g,c=>'_'+c.charCodeAt(0).toString(16)).slice(0,190)}
+function fmtDate(iso){if(!iso)return '—';const d=new Date(iso);if(isNaN(d))return esc(iso);return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}
+function toast(msg,ms=3200){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),ms)}
+function sym(s){const u=s.toUpperCase();const p=u.split('/');
+  if(p.length===2&&'WUBRGC'.includes(p[0])&&p[1]==='P')return `<i class="ms ms-${p[0].toLowerCase()}" title="{${u}}">${p[0]}</i>`;
+  if(p.length===2&&'WUBRG'.includes(p[0])&&'WUBRG'.includes(p[1]))return `<i class="ms ms-h" style="--a:var(--m${p[0].toLowerCase()});--b:var(--m${p[1].toLowerCase()})" title="{${u}}"></i>`;
+  if(p.length===2&&/^\d$/.test(p[0]))return `<i class="ms ms-h" style="--a:var(--mn);--b:var(--m${p[1].toLowerCase()})" title="{${u}}"></i>`;
+  if(u.length===1&&'WUBRGC'.includes(u))return `<i class="ms ms-${u.toLowerCase()}" title="{${u}}">${u}</i>`;
+  if(u==='T')return '<i class="ms ms-t" title="{T} engager">↷</i>';
+  if(u==='Q')return '<i class="ms ms-t" title="{Q} dégager">↶</i>';
+  return `<i class="ms ms-n" title="{${esc(u)}}">${esc(u)}</i>`}
+function mana(m){if(!m)return '';return front(m).replace(/\{([^}]+)\}/g,(_,s)=>sym(s))}
+function oracleHTML(o){return esc(o||'').replace(/\{([^}]+)\}/g,(_,s)=>sym(s)).replace(/\n/g,'<br>')}
+function pips(colors){return [...(colors||'')].filter(c=>'WUBRG'.includes(c)).map(c=>sym(c)).join('')||sym('C')}
+function edge(k){const cs=[...(k||'')].filter(c=>'WUBRG'.includes(c));if(!cs.length)return 'var(--mc)';if(cs.length===1)return `var(--m${cs[0].toLowerCase()})`;if(cs.length>2)return 'linear-gradient(var(--gold),var(--gold))';return `linear-gradient(var(--m${cs[0].toLowerCase()}) 50%,var(--m${cs[1].toLowerCase()}) 50%)`}
+function scryUrl(set,num,en){return set?`https://scryfall.com/card/${encodeURIComponent(set)}/${encodeURIComponent(num)}`:`https://scryfall.com/search?q=${encodeURIComponent('!"'+en+'"')}`}
+const queues={};
+function serial(path,fn){const p=(queues[path]||Promise.resolve()).catch(()=>{}).then(fn);queues[path]=p;return p}
+async function dbSet(path,data){if(!S.db)throw new Error('Base indisponible');return serial(path,()=>S.db.doc(path).set(data))}
+async function dbUpdate(path,data){if(!S.db)throw new Error('Base indisponible');return serial(path,()=>S.db.doc(path).update(data))}
+
+/* ================= card database ================= */
+function getCard(key){return S.extra[key]||S.cards[key]||null}
+function indexCard(key,c){if(!c||!c.e)return;const add=(n)=>{n=norm(n);if(!n)return;const cur=S.nameIdx.get(n);if(!cur||(!getCard(cur).o&&c.o))S.nameIdx.set(n,key)};add(c.e);if(c.e.includes(' // '))add(front(c.e));if(c.f)add(c.f)}
+function rebuildIndex(){S.nameIdx=new Map();for(const k in S.cards)indexCard(k,S.cards[k]);for(const k in S.extra)indexCard(k,S.extra[k])}
+function cardByName(name){const k=S.nameIdx.get(norm(name));return k?{key:k,...getCard(k)}:null}
+function catOf(c,isCmd){if(isCmd)return 'Commandant';const t=front(c&&c.t||'');
+  if(/\bLand\b/.test(t))return 'Terrain';if(/Creature/.test(t))return 'Créature';if(/Planeswalker/.test(t))return 'Planeswalker';
+  if(/Instant/.test(t))return 'Éphémère';if(/Sorcery/.test(t))return 'Rituel';if(/Artifact/.test(t))return 'Artéfact';if(/Enchantment/.test(t))return 'Enchantement';if(/Battle/.test(t))return 'Bataille';return 'Autre'}
+
+/* ================= CSV ================= */
+function parseCSV(text){const rows=[];let row=[],f='',q=false;text=text.replace(/^﻿/,'');
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}
+    else if(ch==='"')q=true;else if(ch===','){row.push(f);f=''}else if(ch==='\n'){row.push(f);rows.push(row);row=[];f=''}else if(ch!=='\r')f+=ch}
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  const h=(rows.shift()||[]).map(s=>s.trim());
+  return {headers:h,rows:rows.filter(r=>r.length>1).map(r=>{const o={};h.forEach((k,i)=>o[k]=r[i]??'');return o})}}
+const REQ=['Card Name','Set Code','Collector Number','Quantity','Container Name'];
+function buildColl(rows){const byKey=new Map(),byEn=new Map(),conts=new Map();let total=0;
+  for(const r of rows){const q=parseInt(r['Quantity'],10)||0;if(!q)continue;
+    const set=(r['Set Code']||'').toLowerCase().trim(),num=(r['Collector Number']||'').toLowerCase().trim(),key=set+'|'+num;
+    const card=getCard(key);const en=(card&&card.e)||r['English Name']||r['Card Name'];
+    const cont=(r['Container Name']||'').trim()||'(sans classeur)';total+=q;
+    let e=byKey.get(key);if(!e){e={key,set,num,en,csvName:r['Card Name'],rarity:(r['Rarity']||'').toLowerCase(),q:0,cont:{},eur:parseFloat(r['Price (EUR)'])||0,fr:null,known:!!card,sid:r['Scryfall ID']||''};byKey.set(key,e)}
+    e.q+=q;e.cont[cont]=(e.cont[cont]||0)+q;if((r['Language']||'')==='fr'&&r['Card Name'])e.fr=r['Card Name'];
+    const n=norm(en);let b=byEn.get(n);if(!b){b={en,q:0,keys:[],cont:{},fr:null};byEn.set(n,b)}
+    b.q+=q;if(!b.sid&&e.sid)b.sid=e.sid;if(!b.keys.includes(key))b.keys.push(key);b.cont[cont]=(b.cont[cont]||0)+q;if(e.fr&&!b.fr)b.fr=e.fr;
+    let c=conts.get(cont);if(!c){c={name:cont,type:r['Container Type']||'',q:0};conts.set(cont,c)}c.q+=q}
+  return {byKey,byEn,conts,total,unique:byEn.size,rows}}
+function imgUrl(key,en,size){size=size||'normal';let sid='';if(S.coll){const e=key&&S.coll.byKey.get(key);if(e&&e.sid)sid=e.sid;else{const b=S.coll.byEn.get(norm(en));if(b&&b.sid)sid=b.sid}}
+  if(/^[0-9a-f-]{36}$/i.test(sid))return `https://cards.scryfall.io/${size}/front/${sid[0]}/${sid[1]}/${sid}.jpg`;
+  return `https://api.scryfall.com/cards/named?format=image&version=${size}&exact=${encodeURIComponent(front(en))}`}
+function imgCard(x){return `<button type="button" class="imgcard" data-card="${esc(x.key||'')}" data-name="${esc(x.en)}" title="${esc(x.fr||x.en)}"><img loading="lazy" src="${esc(imgUrl(x.key,x.en))}" alt="${esc(x.fr||x.en)}">${x.qty>1?`<span class="qb">×${x.qty}</span>`:''}</button>`}
+function unknownKeys(){if(!S.coll)return [];return [...S.coll.byKey.values()].filter(e=>!getCard(e.key))}
+function nameInfo(n){/* n normalized */const b=S.coll&&S.coll.byEn.get(n);let card=null,key=null;
+  if(b){for(const k of b.keys){const c=getCard(k);if(c){card=c;key=k;break}}}
+  if(!card){const c=cardByName(n);if(c){card=c;key=c.key}}
+  return {b,card,key}}
+function frOf(en){const n=norm(en);const {b,card}=nameInfo(n);return (b&&b.fr)||(card&&card.f)||''}
+
+/* ================= decks ================= */
+function deckList(){return Object.entries(S.decks).map(([id,d])=>({id,...d})).sort((a,b)=>(a.order||99)-(b.order||99)||a.name.localeCompare(b.name))}
+function contCards(cont){const m=new Map();if(!S.coll||!cont)return m;
+  for(const [n,b] of S.coll.byEn){const q=b.cont[cont];if(q)m.set(n,q)}return m}
+function deckQtyMap(d,side){if(d.container){return contCards(side?d.side:d.container)}
+  const m=new Map();if(side)return m;for(const x of d.list||[]){const n=norm(x.en);m.set(n,(m.get(n)||0)+(+x.qty||1))}return m}
+function deckCards(d,side){const qm=deckQtyMap(d,side);const cmd=norm(d.commander);const out=[];
+  for(const [n,q] of qm){const {b,card,key}=nameInfo(n);const en=(card&&card.e)||(b&&b.en)||n;
+    const isCmd=!side&&!!cmd&&(n===cmd||norm(front(en))===cmd);
+    out.push({n,en,fr:(b&&b.fr)||(card&&card.f)||'',qty:q,card,key,isCmd,cat:catOf(card,isCmd),known:!!card})}
+  return out.sort((a,b)=>((a.card&&a.card.c)||0)-((b.card&&b.card.c)||0)||a.en.localeCompare(b.en))}
+let _usage=null;
+function usage(){if(_usage)return _usage;const u=new Map();
+  for(const d of deckList()){for(const side of [false,true]){if(side&&!d.side)continue;for(const [n,q] of deckQtyMap(d,side)){if(!u.has(n))u.set(n,[]);u.get(n).push({id:d.id,name:d.name,q})}}}
+  return _usage=u}
+function owned(n){const b=S.coll&&S.coll.byEn.get(n);return b?b.q:0}
+function availFor(n,deckId){if(isBasic(n))return 99;const used=(usage().get(n)||[]).filter(x=>x.id!==deckId).reduce((s,x)=>s+x.q,0);return owned(n)-used}
+function identityOf(d,cards){if(d.commander){const c=cardByName(d.commander)||(cards.find(x=>x.isCmd)||{}).card;if(c&&c.k!==undefined)return COLORS.filter(x=>c.k.includes(x)).join('')}
+  const s=new Set();for(const x of cards)if(x.card)for(const ch of x.card.k||'')s.add(ch);return COLORS.filter(c=>s.has(c)).join('')}
+function withinIdentity(k,id){return [...(k||'')].every(c=>!'WUBRG'.includes(c)||id.includes(c))}
+function pipCount(m){const r={W:0,U:0,B:0,R:0,G:0};if(!m)return r;for(const [,s] of front(m).matchAll(/\{([^}]+)\}/g)){const p=s.toUpperCase().split('/');const cs=p.filter(x=>'WUBRG'.includes(x)&&x.length===1);for(const c of cs)r[c]+=1/cs.length}return r}
+function landColors(c,id){const out=new Set();if(!c)return out;const t=front(c.t||''),o=c.o||'';
+  const TYPES={Plains:'W',Island:'U',Swamp:'B',Mountain:'R',Forest:'G'};
+  for(const [w,col] of Object.entries(TYPES))if(new RegExp('\\b'+w+'\\b').test(t))out.add(col);
+  for(const m of o.matchAll(/Add ([^.\n]*)/g)){const seg=m[1];for(const [,s] of seg.matchAll(/\{([WUBRG])\}/g))out.add(s);if(/any color|any type|one mana of any|of any color/i.test(seg))for(const ch of id)out.add(ch)}
+  if(/Search your library for an? ([^.]*?)card/i.test(o)){const seg=o.match(/Search your library for an? ([^.]*?)card/i)[1];
+    for(const [w,col] of Object.entries(TYPES))if(seg.includes(w))out.add(col);if(/basic land/i.test(seg))for(const ch of id)out.add(ch)}
+  return out}
+function deckStats(d,cards){const id=identityOf(d,cards);const total=cards.reduce((s,x)=>s+x.qty,0);
+  const nonland=cards.filter(x=>x.cat!=='Terrain');const lands=cards.filter(x=>x.cat==='Terrain');
+  const nlq=nonland.reduce((s,x)=>s+x.qty,0);const avg=nlq?nonland.reduce((s,x)=>s+((x.card&&x.card.c)||0)*x.qty,0)/nlq:0;
+  const curve=[0,0,0,0,0,0,0,0];for(const x of nonland){const c=Math.min(7,Math.round((x.card&&x.card.c)||0));curve[c]+=x.qty}
+  const demand={W:0,U:0,B:0,R:0,G:0};for(const x of nonland){const p=pipCount(x.card&&x.card.m);for(const c of COLORS)demand[c]+=p[c]*x.qty}
+  const sources={W:0,U:0,B:0,R:0,G:0};let landq=0,basicsq=0;for(const x of lands){landq+=x.qty;if(isBasic(x.en))basicsq+=x.qty;for(const c of landColors(x.card,id))if(sources[c]!==undefined)sources[c]+=x.qty}
+  const warns=[];const fmt=d.format||'Commander';
+  for(const x of cards){if(!x.known){warns.push({n:x.n,t:'Carte inconnue de la base (à compléter)'});continue}
+    if(!withinIdentity(x.card.k,id)&&fmt==='Commander')warns.push({n:x.n,t:'Hors identité de couleur du commandant'});
+    if(fmt==='Commander'&&x.card.l!==undefined&&!x.card.l.includes('C'))warns.push({n:x.n,t:'Non légale en Commander'});
+    if(fmt==='Pauper'&&x.card.l!==undefined&&!x.card.l.includes('P'))warns.push({n:x.n,t:'Non légale en Pauper'});
+    if(fmt==='Commander'&&x.qty>1&&!isBasic(x.en)&&!/any number of cards named/i.test(x.card.o||''))warns.push({n:x.n,t:`${x.qty} exemplaires (singleton)`})}
+  return {id,total,avg,curve,demand,sources,landq,basicsq,warns}}
+
+/* ================= swaps ================= */
+function swapStatus(s,d,inSet){const o=norm(s.out.en),i=norm(s.in.en);
+  if(s.kind==='basics'){return {k:'manual',label:'Ajustement de base',cls:''}}
+  const hasIn=inSet.has(i),hasOut=inSet.has(o);
+  if(hasIn&&!hasOut)return {k:'applied',label:'Appliqué',cls:'ok'};
+  if(hasIn)return {k:'inpresent',label:'IN déjà dans le deck',cls:'warn'};
+  const av=availFor(i,d.id);const own=owned(i);
+  if(!hasOut)return {k:'outgone',label:'OUT absent du deck',cls:'warn',av};
+  if(av>0)return {k:'ok',label:`Disponible ×${av}`,cls:'ok',av};
+  if(own>0){const who=(usage().get(i)||[]).filter(x=>x.id!==d.id).map(x=>x.name).join(', ');return {k:'used',label:`Utilisée dans ${who}`,cls:'bad'}}
+  return {k:'missing',label:'Non possédée',cls:'bad'}}
+
+/* ================= boot ================= */
+async function boot(){
+  try{const r=await fetch('cards.json');S.cards=await r.json()}catch(e){S.cards={}}
+  rebuildIndex();S.ready.cards=true;
+  if(S.local)window.addEventListener('grimoire-update',e=>{S.upd={...(S.upd||{}),...e.detail};render()});
+  window.addEventListener('hashchange',render);
+  $('#btn-import').addEventListener('click',openImport);
+  $('#dlg-close').addEventListener('click',()=>$('#dlg').close());
+  $('#file-input').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)handleFile(f)});
+  render();
+  if(!window.claude||!window.claude.use){S.noRuntime=true;render();return}
+  const [db,user,assets,sample,mcp]=await Promise.all(['db','user','assets','sample','mcp'].map(n=>window.claude.use(n).catch(()=>null)));
+  Object.assign(S,{db,user,assets,sample,mcp});
+  S.canWrite=!!assets||(user&&user.canEdit?!!(await Promise.resolve(user.canEdit()).catch(()=>false)):false);
+  if(!db){S.noRuntime=true;render();return}
+  const timer=setTimeout(()=>{S.slow=true;render()},10000);
+  db.doc('app/state').onSnapshot(snap=>{clearTimeout(timer);S.slow=false;S.state=snap.exists?snap.data():null;S.ready.state=true;loadCsvFromState();render()},err=>{S.dbError=err.code;render()});
+  db.collection('decks').onSnapshot(q=>{S.decks={};q.docs.forEach(d=>S.decks[d.id]=d.data());S.ready.decks=true;_usage=null;render()},err=>{S.dbError=err.code;render()});
+  db.collection('swaps').onSnapshot(q=>{S.swaps={};q.docs.forEach(d=>S.swaps[d.id]=d.data());S.ready.swaps=true;render()},()=>{});
+  let _exT=0;db.collection('cards_extra').onSnapshot(q=>{clearTimeout(_exT);_exT=setTimeout(()=>{S.extra={};q.docs.forEach(d=>{const v=d.data();if(v&&v.key)S.extra[v.key]=v});if(S.enr&&S.enr.running)return;rebuildIndex();if(S.coll)S.coll=buildColl(S.coll.rows);_usage=null;render()},500)},()=>{});
+  db.doc('app/offres').onSnapshot(s=>{S.offres=s.exists?s.data():null;render()},()=>{});
+}
+let _loadingCsv=null;
+async function loadCsvFromState(){const id=S.state&&S.state.csv&&S.state.csv.id;if(!id||id===S.csvId||_loadingCsv===id)return;
+  _loadingCsv=id;try{const r=await fetch('/_blob/'+id);if(!r.ok)throw new Error(r.status);const txt=await r.text();const p=parseCSV(txt);S.coll=buildColl(p.rows);S.csvId=id;_usage=null}catch(e){S.csvError='Le fichier CSV enregistré est introuvable ('+e.message+'). Réimporte ton export Mythic Tools.'}
+  _loadingCsv=null;render()}
+
+/* ================= render ================= */
+let _raf=0;function render(){cancelAnimationFrame(_raf);_raf=requestAnimationFrame(doRender)}
+function route(){const h=(location.hash||'#decks').slice(1);if(h.startsWith('deck-'))return {v:'deck',id:h.slice(5)};if(['collection','offres'].includes(h))return {v:h};return {v:'decks'}}
+function doRender(){const r=route();
+  document.querySelectorAll('[data-nav]').forEach(a=>{const on=a.dataset.nav===(r.v==='deck'?'decks':r.v);on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
+  $('#btn-import').hidden=!S.canWrite&&!S.noRuntime;
+  const keep={};document.querySelectorAll('#app [data-keep]').forEach(el=>{if(el.dataset.dirty)keep[el.id]=el.value});
+  const focusId=document.activeElement&&document.activeElement.id;const sel=document.activeElement&&document.activeElement.selectionStart;
+  const app=$('#app');
+  if(r.v==='deck')app.innerHTML=viewDeck(r.id);else if(r.v==='collection')app.innerHTML=viewCollection();else if(r.v==='offres')app.innerHTML=viewOffres();else app.innerHTML=viewHome();
+  for(const id in keep){const el=document.getElementById(id);if(el){el.value=keep[id];el.dataset.dirty='1';const s=el.closest('[data-edit]');if(s)s.classList.add('editing')}}
+  if(focusId){const el=document.getElementById(focusId);if(el&&el!==document.body){el.focus();try{if(sel!=null&&el.setSelectionRange)el.setSelectionRange(sel,sel)}catch(e){}}}
+  bind(r)}
+
+function statusBar(){const st=S.state&&S.state.csv;const c=S.coll;
+  if(!c)return '';
+  const unk=unknownKeys().length;
+  return `<div class="statusbar">
+    <div><div class="k">Cartes</div><div class="v">${c.total.toLocaleString('fr-FR')}</div></div>
+    <div><div class="k">Uniques</div><div class="v">${c.unique.toLocaleString('fr-FR')}</div></div>
+    <div><div class="k">Classeurs</div><div class="v">${c.conts.size}</div></div>
+    <div style="min-width:0;flex:1"><div class="k">Dernier import</div><div style="overflow:hidden;text-overflow:ellipsis">${st?esc(fmtDate(st.uploadedAt))+' <span class="muted">· '+esc(st.name)+'</span>':'—'}</div></div>
+    ${unk?`<span class="pill warn">${unk} carte${unk>1?'s':''} à compléter</span>`:'<span class="pill ok">Base complète</span>'}
+  </div>`}
+
+function alerts(){const out=[];
+  if(S.upd&&S.upd.state==='downloading')out.push(`<div class="alert"><div class="grow">Téléchargement de la mise à jour${S.upd.version?' '+esc(S.upd.version):''}… <span class="num">${S.upd.percent||0} %</span><div class="progress" style="margin-top:6px"><i style="width:${S.upd.percent||0}%"></i></div></div></div>`);
+  if(S.upd&&S.upd.state==='ready')out.push(`<div class="alert ok"><div class="grow"><b>Grimoire ${esc(S.upd.version||'')} est prêt.</b> Redémarre pour l'installer, ou il s'installera à la prochaine fermeture.</div><button class="btn primary small" data-act="installupd">Redémarrer maintenant</button></div>`);
+  if(S.noRuntime)out.push(`<div class="alert warn"><div class="grow"><b>Mode aperçu.</b> La sauvegarde en ligne n'est pas disponible dans cette vue : un CSV importé ici n'est gardé que jusqu'au rechargement.</div></div>`);
+  if(S.dbError)out.push(`<div class="alert bad"><div class="grow">Impossible de lire les données enregistrées (${esc(S.dbError)}). Recharge la page.</div></div>`);
+  if(S.slow&&!S.ready.state)out.push(`<div class="alert warn"><div class="grow">Les données enregistrées ne répondent pas encore. Elles s'afficheront dès que la connexion revient.</div></div>`);
+  if(S.csvError)out.push(`<div class="alert bad"><div class="grow">${esc(S.csvError)}</div></div>`);
+  const unk=unknownKeys();
+  if(S.enr){out.push(`<div class="alert"><div class="grow" id="enr-strip">${enrProgressHTML()}</div><div class="row" style="gap:6px"><button class="btn small" data-act="enrich">Détail</button>${!S.enr.running?'<button class="btn small ghost" data-act="enrhide" aria-label="Masquer">✕</button>':''}</div></div>`)}
+  if(unk.length&&!(S.enr&&S.enr.running)){const names=unk.slice(0,6).map(e=>esc(e.fr||e.en)+` <span class="muted">(${esc(e.set.toUpperCase())} #${esc(e.num)})</span>`).join(', ');
+    out.push(`<div class="alert warn"><div class="grow"><b>${unk.length} carte${unk.length>1?'s':''} du CSV absente${unk.length>1?'s':''} de la base</b> : ${names}${unk.length>6?'…':''}. Sans texte oracle, elles sont comptées mais ignorées dans les stats et l'analyse.</div>${S.canWrite?'<button class="btn small" data-act="enrich">Compléter via Scryfall</button>':''}</div>`)}
+  if(S.coll&&S.ready.decks){const linked=new Set();for(const d of deckList()){if(d.container)linked.add(d.container);if(d.side)linked.add(d.side)}
+    const fresh=[...S.coll.conts.values()].filter(c=>/ - main$/i.test(c.name)&&!linked.has(c.name));
+    for(const c of fresh)out.push(`<div class="alert"><div class="grow">Nouveau deck détecté dans Mythic Tools : <b>${esc(c.name)}</b> (${c.q} cartes).</div>${S.canWrite?`<button class="btn small" data-act="newdeck" data-cont="${esc(c.name)}">Créer le deck</button>`:''}</div>`)}
+  return out.join('')}
+
+function viewHome(){
+  if(!S.coll&&!S.noRuntime&&(!S.ready.state||(S.state&&S.state.csv)))return `<div class="stack">${alerts()}<div class="empty">Chargement de la collection…</div></div>`;
+  const decks=deckList();
+  const cards=decks.map(d=>{const cs=deckCards(d);const st=deckStats(d,cs);const sw=(S.swaps[d.id]&&S.swaps[d.id].items)||[];const inSet=new Set(cs.map(x=>x.n));
+    const counts={pending:0,applied:0};for(const s of sw){const k=swapStatus(s,d,inSet).k;if(k==='applied')counts.applied++;else counts.pending++}
+    const cmd=d.commander?(frOf(d.commander)||d.commander):'';
+    return `<button class="deckcard" type="button" data-go="deck-${esc(d.id)}">
+      <span class="frame" style="background:${edge(st.id)}"></span>
+      <span class="row" style="justify-content:space-between"><span class="pill">${esc(d.format||'Commander')}</span><span>${pips(st.id)}</span></span>
+      <span class="nm">${esc(d.name)}</span>
+      <span class="cm">${esc(cmd||'—')}</span>
+      <span class="meta"><span class="pill num">${st.total} cartes</span>${d.container?'<span class="pill">Mythic Tools</span>':'<span class="pill warn">Liste manuelle</span>'}${counts.pending?`<span class="pill acc">${counts.pending} swap${counts.pending>1?'s':''}</span>`:''}${counts.applied?`<span class="pill ok">${counts.applied} appliqué${counts.applied>1?'s':''}</span>`:''}${st.warns.length?`<span class="pill warn">${st.warns.length} alerte${st.warns.length>1?'s':''}</span>`:''}</span>
+    </button>`}).join('');
+  const diff=S.state&&S.state.lastDiff;
+  return `<div class="stack">
+    ${statusBar()}${alerts()}
+    ${!S.coll?`<div class="panel"><h2>Importe ta collection</h2><p class="muted">Exporte ta collection complète depuis Mythic Tools (CSV), puis dépose le fichier ici. Les decks, les stats et la disponibilité des swaps se recalculent à partir de ce fichier.</p><button class="btn primary" data-act="import">Importer un CSV</button></div>`:''}
+    <div class="row" style="justify-content:space-between"><h2>Decks</h2>${S.canWrite?'<button class="btn small" data-act="newdeck">Nouveau deck</button>':''}</div>
+    ${decks.length?`<div class="grid-decks">${cards}</div>`:`<div class="panel empty">Aucun deck enregistré pour l'instant. Crée-en un depuis un classeur Mythic Tools « … - Main » ou à partir d'une liste.</div>`}
+    ${diff?viewDiff(diff):''}
+    <details class="panel"><summary>Comment ça marche</summary><div class="steps" style="margin-top:12px">
+      <div><b>1. Exporter</b>Dans Mythic Tools, exporte la collection complète en CSV.</div>
+      <div><b>2. Importer</b>Bouton « Importer un CSV ». Les quantités, les decks (classeurs « … - Main ») et les swaps appliqués sont détectés automatiquement.</div>
+      <div><b>3. Compléter</b>Les cartes inconnues se complètent via Scryfall, depuis l'app Claude desktop.</div>
+      <div><b>4. Réévaluer</b>Sur un deck, « Réévaluer avec Claude » propose des swaps tirés de ta collection disponible.</div>
+    </div>${S.local&&window.grimoireLocal.version?`<p class="muted" style="margin:10px 0 0;font-size:.85rem">Grimoire ${esc(window.grimoireLocal.version)} · mises à jour automatiques depuis GitHub</p>`:''}</details>
+  </div>`}
+function viewDiff(d){const li=a=>a.map(x=>`<li>${x.q>0?'+':''}${x.q} ${esc(x.fr||x.en)}${x.fr&&x.fr!==x.en?` <span class="muted">${esc(x.en)}</span>`:''}</li>`).join('');
+  return `<details class="panel"><summary>Changements du dernier import (${fmtDate(d.at)}) : +${d.addedQ||0} / −${d.removedQ||0} cartes</summary>
+  <div class="two" style="margin-top:10px"><div><h3>Ajoutées</h3><ul>${li(d.added||[])||'<li class="muted">Aucune</li>'}</ul>${(d.addedN||0)>(d.added||[]).length?`<p class="muted">… et ${d.addedN-(d.added||[]).length} autres</p>`:''}</div>
+  <div><h3>Retirées</h3><ul>${li(d.removed||[])||'<li class="muted">Aucune</li>'}</ul>${(d.removedN||0)>(d.removed||[]).length?`<p class="muted">… et ${d.removedN-(d.removed||[]).length} autres</p>`:''}</div></div></details>`}
+
+/* ---------- deck view ---------- */
+function viewDeck(id){const d=S.decks[id];
+  if(!d)return S.ready.decks?`<div class="empty">Ce deck n'existe plus. <a href="#decks">Retour aux decks</a></div>`:'<div class="empty">Chargement…</div>';
+  const dd={id,...d};const cards=deckCards(dd);const side=d.side?deckCards(dd,true):[];const st=deckStats(dd,cards);
+  const by={};for(const x of cards)(by[x.cat]=by[x.cat]||[]).push(x);
+  const asImg=S.local&&S.ui.deckView==='img';const lst=a=>asImg?`<div class="imggrid">${a.map(imgCard).join('')}</div>`:a.map(rowCard).join('');
+  const blocks=CATS.filter(c=>by[c]).map(c=>`<div class="catblock"><h3><span>${CATL[c]}</span><span class="num">${by[c].reduce((s,x)=>s+x.qty,0)}</span></h3>${lst(by[c])}</div>`).join('');
+  const sideBlock=side.length?`<div class="catblock"><h3><span>Réserve</span><span class="num">${side.reduce((s,x)=>s+x.qty,0)}</span></h3>${lst(side)}</div>`:'';
+  const cmd=d.commander?(frOf(d.commander)||d.commander):'';
+  const expected=(d.format==='Pauper')?60:100;
+  return `<div class="stack">
+    <div class="deckhead"><div class="grow stack" style="gap:6px">
+      <div class="crumbs"><a href="#decks">Decks</a> <span class="muted">/</span></div>
+      <h1>${esc(d.name)}</h1>
+      <div class="row muted">${pips(st.id)} <span>${esc(d.format||'Commander')}</span>${cmd?`<span>· ${esc(cmd)}</span>`:''}${d.difficulty?`<span>· ${esc(d.difficulty)}</span>`:''}</div>
+      <div class="row">${d.container?`<span class="pill">Classeur Mythic Tools : ${esc(d.container)}</span>`:'<span class="pill warn">Liste manuelle (pas de classeur Mythic Tools)</span>'}${st.total!==expected?`<span class="pill warn num">${st.total}/${expected} cartes</span>`:`<span class="pill ok num">${st.total} cartes</span>`}</div>
+    </div>
+    <div class="row">${S.canWrite?`${!d.container?'<button class="btn small" data-act="editlist">Modifier la liste</button>':''}<button class="btn small" data-act="settings">Réglages</button>`:''}${S.sample&&S.canWrite?'<button class="btn primary" data-act="analyse">Réévaluer avec Claude</button>':''}</div></div>
+    ${!S.coll&&d.container?'<div class="alert warn"><div class="grow">Importe ton CSV pour afficher les cartes de ce deck.</div></div>':''}
+    <div class="deckgrid">
+      <div class="stack">
+        <div class="panel">${editable('strat','Stratégie',d.strat,'Décris le plan de jeu…')}</div>
+        <div class="panel"><div class="kpis">
+          <div class="kpi"><div class="k">Cartes</div><div class="v">${st.total}</div></div>
+          <div class="kpi"><div class="k">CMC moyen</div><div class="v">${st.avg.toFixed(2)}</div></div>
+          <div class="kpi"><div class="k">Terrains</div><div class="v">${st.landq}</div></div>
+          <div class="kpi"><div class="k">Base</div><div class="v">${st.basicsq}</div></div></div>
+          <div class="two" style="margin-top:14px"><div><h3>Courbe de mana</h3>${curveSvg(st.curve)}</div><div><h3>Couleurs : demande / sources</h3>${colorBars(st)}</div></div>
+        </div>
+        ${st.warns.length?`<div class="panel"><h3>Alertes</h3>${st.warns.map(w=>{const {card}=nameInfo(w.n);return `<div class="row" style="gap:6px;padding:3px 0"><span class="pill warn">${esc(w.t)}</span> ${esc((card&&(card.f||card.e))||w.n)}</div>`}).join('')}</div>`:''}
+        <div class="panel"><div class="row" style="justify-content:space-between"><h3>Liste</h3>${S.local?`<div class="seg" role="group" aria-label="Affichage"><button type="button" data-deckview="text" aria-pressed="${!asImg}">Texte</button><button type="button" data-deckview="img" aria-pressed="${asImg}">Images</button></div>`:''}</div>${cards.length?blocks+sideBlock:'<div class="empty">Aucune carte.</div>'}</div>
+      </div>
+      <div class="stack">
+        ${viewSwaps(dd,cards)}
+        <div class="panel">${editable('notes','Notes',d.notes,'Tes notes sur ce deck : cartes auxquelles tu tiens, axes à garder…')}</div>
+      </div>
+    </div></div>`}
+function editable(field,label,val,ph){const has=!!(val&&val.trim());
+  return `<div data-edit="${field}" class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><h3>${label}</h3>${S.canWrite?`<button class="btn small ghost" data-act="edit" data-field="${field}">Modifier</button>`:''}</div>
+  <div class="edit-view">${has?`<div class="prose clamp" data-clamp>${esc(val)}</div>${val.length>420?'<button class="btn small ghost" data-act="unclamp">Tout afficher</button>':''}`:`<p class="muted">${S.canWrite?'Vide. Clique sur Modifier pour en ajouter.':'Vide.'}</p>`}</div>
+  <div class="edit-form" hidden><textarea class="edit" id="ta-${field}" data-keep placeholder="${esc(ph)}">${esc(val||'')}</textarea><div class="row"><button class="btn primary small" data-act="save" data-field="${field}">Enregistrer</button><button class="btn small" data-act="cancel">Annuler</button></div></div></div>`}
+function rowCard(x){const c=x.card;
+  return `<button class="cardrow" type="button" data-card="${esc(x.key||'')}" data-name="${esc(x.en)}"><span class="q">${x.qty}</span><span class="n">${esc(x.fr||x.en)}${x.fr&&x.fr!==x.en?`<small>${esc(x.en)}</small>`:''}${!x.known?'<span class="flag">à compléter</span>':''}</span><span>${c?mana(c.m):''}</span></button>`}
+function curveSvg(cv){const max=Math.max(1,...cv);return `<div class="bars">${cv.map((v,i)=>`<div class="b" title="CMC ${i}${i===7?'+':''} : ${v}"><span>${v||''}</span><i style="height:${Math.round(v/max*60)}px"></i><span>${i}${i===7?'+':''}</span></div>`).join('')}</div>`}
+function colorBars(st){const cols=COLORS.filter(c=>st.id.includes(c));if(!cols.length)return '<p class="muted">Deck incolore.</p>';
+  const dt=cols.reduce((s,c)=>s+st.demand[c],0)||1;
+  const rows=cols.map(c=>{const dp=st.demand[c]/dt;const sp=st.landq?st.sources[c]/st.landq:0;const sugg=Math.round(dp*st.basicsq);
+    return `<div class="colorrow"><span>${sym(c)}</span><div class="stack" style="gap:3px"><div class="meter" title="Demande ${Math.round(dp*100)} %"><i style="width:${Math.round(dp*100)}%;background:var(--m${c.toLowerCase()})"></i></div><div class="meter src" title="Sources ${st.sources[c]}/${st.landq}"><i style="width:${Math.round(sp*100)}%;background:var(--m${c.toLowerCase()})"></i></div></div><span class="num muted" style="font-size:.78rem">${Math.round(dp*100)} % · ${st.sources[c]} src</span></div>`}).join('');
+  const hint=st.basicsq?`<p class="muted" style="font-size:.8rem;margin:6px 0 0">Barre pleine : part des symboles de mana. Barre claire : terrains qui produisent la couleur. Répartition des ${st.basicsq} terrains de base selon la demande : ${cols.map(c=>`${Math.round(st.demand[c]/dt*st.basicsq)} ${CNAME[c].toLowerCase()}`).join(', ')}.</p>`:'';
+  return rows+hint}
+function viewSwaps(d,cards){const doc=S.swaps[d.id]||{items:[],acq:[]};const inSet=new Set(cards.map(x=>x.n));
+  const items=(doc.items||[]).map(s=>({s,st:swapStatus(s,d,inSet)}));
+  const view=S.ui.swapView[d.id]||'pending';
+  const pend=items.filter(x=>x.st.k!=='applied'),appl=items.filter(x=>x.st.k==='applied');
+  const list=view==='applied'?appl:pend;
+  const cardsSw=list.filter(x=>x.s.kind==='card'),landSw=list.filter(x=>x.s.kind!=='card');
+  const one=x=>{const s=x.s;const fo=s.out.fr||frOf(s.out.en)||s.out.en,fi=s.in.fr||frOf(s.in.en)||s.in.en;const ci=cardByName(s.in.en);
+    return `<div class="swap"><div class="pair"><button type="button" class="out" data-name="${esc(s.out.en)}">${esc(fo)}</button><span class="arrow">→</span><button type="button" data-name="${esc(s.in.en)}">${s.qty>1?s.qty+'× ':''}${esc(fi)}</button><span class="nowrap">${ci?mana(ci.m):''}</span></div>
+      <div class="st"><span class="pill ${x.st.cls}">${esc(x.st.label)}</span>${S.canWrite?`<button class="btn small ghost" data-act="delswap" data-sid="${esc(s.id)}" title="Retirer cette recommandation" aria-label="Retirer">✕</button>`:''}</div>
+      ${s.reason?`<div class="why clamp" data-act="unclampwhy">${esc(s.reason)}</div>`:''}</div>`};
+  const acq=(doc.acq||[]).map(a=>`<div class="swap"><div class="pair"><button type="button" data-name="${esc(a.en)}">${esc(a.fr||a.en)}</button>${owned(norm(a.en))?'<span class="pill ok">Possédée</span>':''}<span class="muted num">${esc(a.price||'')}</span></div>${a.reason?`<div class="why clamp" data-act="unclampwhy">${esc(a.reason)}</div>`:''}</div>`).join('');
+  return `<div class="panel stack" style="gap:10px"><div class="row" style="justify-content:space-between"><h3>Recommandations</h3>
+    <div class="seg" role="group" aria-label="Filtre"><button type="button" data-swapview="pending" aria-pressed="${view==='pending'}">En attente ${pend.length}</button><button type="button" data-swapview="applied" aria-pressed="${view==='applied'}">Appliqués ${appl.length}</button></div></div>
+    ${doc.intro&&view==='pending'?`<div class="prose clamp muted" data-clamp style="font-size:.88rem">${esc(doc.intro)}</div>`:''}
+    ${view==='applied'&&appl.length&&S.canWrite?`<div class="alert ok"><div class="grow">Le dernier CSV montre ces swaps faits dans le deck.</div><button class="btn small" data-act="archive">Archiver</button></div>`:''}
+    ${cardsSw.length?`<div><h3 style="margin-bottom:2px">Cartes</h3>${cardsSw.map(one).join('')}</div>`:''}
+    ${landSw.length?`<div><h3 style="margin-bottom:2px">Terrains</h3>${landSw.map(one).join('')}</div>`:''}
+    ${!list.length?`<p class="muted">${view==='applied'?'Aucun swap détecté comme appliqué.':'Aucune recommandation en attente.'}</p>`:''}
+    ${acq?`<details><summary>À acquérir (${doc.acq.length})</summary>${acq}</details>`:''}
+    ${(doc.archive||[]).length?`<details><summary>Historique archivé (${doc.archive.length})</summary>${doc.archive.slice(-40).reverse().map(a=>`<div class="muted" style="font-size:.85rem;padding:2px 0">${esc(a.date||'')} · ${esc(a.out)} → ${esc(a.in)}</div>`).join('')}</details>`:''}
+  </div>`}
+
+/* ---------- collection ---------- */
+function collEntries(){const u=S.ui.coll;if(!S.coll)return [];const q=norm(u.q);const terms=q?q.split(' '):[];
+  const out=[];for(const [n,b] of S.coll.byEn){const {card}=nameInfo(n);const c=card||{};
+    if(u.colors.length){const k=c.k||'';if(u.colors.includes('C')){if(k.replace(/[^WUBRG]/g,''))continue}else if(u.colors.includes('M')){if(k.length<2)continue}else if(!u.colors.every(x=>k.includes(x)))continue}
+    if(u.type&&catOf(c,false)!==u.type)continue;
+    if(u.rarity&&(c.r||'')!==u.rarity)continue;
+    if(u.cont&&!b.cont[u.cont])continue;
+    if(u.fmt==='C'&&!(c.l||'').includes('C'))continue;if(u.fmt==='P'&&!(c.l||'').includes('P'))continue;
+    let av=null;if(u.avail){av=availFor(n,null);if(av<=0)continue}
+    if(terms.length){const hay=norm(b.en+' '+(b.fr||'')+' '+(c.f||'')+' '+(c.t||'')+' '+(c.o||''));if(!terms.every(t=>hay.includes(t)))continue}
+    out.push({n,b,c,known:!!card})}
+  const s=u.sort;out.sort((a,b)=>s==='qty'?b.b.q-a.b.q:s==='cmc'?(a.c.c||0)-(b.c.c||0):(a.b.fr||a.b.en).localeCompare(b.b.fr||b.b.en,'fr'));return out}
+function viewCollection(){if(!S.coll)return `<div class="stack">${alerts()}<div class="panel empty">Importe ton CSV Mythic Tools pour parcourir ta collection.${S.canWrite?'<br><br><button class="btn primary" data-act="import">Importer un CSV</button>':''}</div></div>`;
+  const u=S.ui.coll;const all=collEntries();const per=60;const pages=Math.max(1,Math.ceil(all.length/per));u.page=Math.min(u.page,pages);
+  const slice=all.slice((u.page-1)*per,u.page*per);const conts=[...S.coll.conts.values()].sort((a,b)=>a.name.localeCompare(b.name));
+  const tiles=slice.map(({n,b,c,known})=>{const used=(usage().get(n)||[]);const av=availFor(n,null);
+    return `<button type="button" class="tile" data-name="${esc(b.en)}"><span class="edge" style="background:${edge(c.k)}"></span>${S.local?`<img class="cimg" loading="lazy" src="${esc(imgUrl(b.keys[0],b.en))}" alt="">`:''}
+    <span class="tt"><span class="tn">${esc(b.fr||c.f||b.en)}${(b.fr||c.f)&&(b.fr||c.f)!==b.en?`<small>${esc(b.en)}</small>`:''}</span><span>${mana(c.m)}</span></span>
+    <span class="ty">${esc(c.t||(known?'':'Carte à compléter'))}</span>${c.o&&!S.local?`<span class="to">${oracleHTML(c.o)}</span>`:''}
+    <span class="tf"><span class="rar ${esc(c.r||'')}"></span><span class="num">×${b.q}</span>${used.length?`<span>· ${used.map(x=>esc(x.name)).join(', ')}</span>`:''}${!isBasic(n)&&av<b.q?`<span>· ${Math.max(0,av)} libre${av>1?'s':''}</span>`:''}</span></button>`}).join('');
+  const cbtn=(c,lab)=>`<button type="button" data-color="${c}" aria-pressed="${u.colors.includes(c)}" title="${lab}">${c==='M'?'<i class="ms ms-n" style="background:var(--gold);color:#fff">M</i>':sym(c)}</button>`;
+  return `<div class="stack">${statusBar()}${alerts()}
+    <div class="filters"><input type="search" id="coll-q" placeholder="Nom FR/EN, type ou texte oracle (ex. « landfall », « draw a card »)" value="${esc(u.q)}" aria-label="Rechercher">
+      <span class="colorpick" role="group" aria-label="Couleurs">${['W','U','B','R','G'].map(c=>cbtn(c,CNAME[c])).join('')}${cbtn('C','Incolore')}${cbtn('M','Multicolore')}</span></div>
+    <div class="filters">
+      <select id="coll-type" aria-label="Type"><option value="">Tous types</option>${CATS.filter(c=>c!=='Commandant').map(c=>`<option ${u.type===c?'selected':''} value="${c}">${CATL[c]}</option>`).join('')}</select>
+      <select id="coll-rarity" aria-label="Rareté"><option value="">Toutes raretés</option>${['common','uncommon','rare','mythic'].map(r=>`<option ${u.rarity===r?'selected':''} value="${r}">${{common:'Commune',uncommon:'Inhabituelle',rare:'Rare',mythic:'Mythique'}[r]}</option>`).join('')}</select>
+      <select id="coll-fmt" aria-label="Format"><option value="">Tous formats</option><option value="C" ${u.fmt==='C'?'selected':''}>Légal Commander</option><option value="P" ${u.fmt==='P'?'selected':''}>Légal Pauper</option></select>
+      <select id="coll-cont" aria-label="Classeur"><option value="">Tous classeurs</option>${conts.map(c=>`<option ${u.cont===c.name?'selected':''} value="${esc(c.name)}">${esc(c.name)} (${c.q})</option>`).join('')}</select>
+      <select id="coll-sort" aria-label="Tri"><option value="name" ${u.sort==='name'?'selected':''}>Tri : nom</option><option value="cmc" ${u.sort==='cmc'?'selected':''}>Tri : CMC</option><option value="qty" ${u.sort==='qty'?'selected':''}>Tri : quantité</option></select>
+      <label class="row" style="gap:6px"><input type="checkbox" id="coll-avail" ${u.avail?'checked':''}> Libres (hors decks)</label>
+      <span class="muted num">${all.length.toLocaleString('fr-FR')} cartes</span></div>
+    ${slice.length?`<div class="grid-cards${S.local?' img':''}">${tiles}</div>`:'<div class="panel empty">Aucune carte ne correspond à ces filtres.</div>'}
+    ${pages>1?`<div class="pager"><button class="btn small" data-page="${u.page-1}" ${u.page<=1?'disabled':''}>← Précédent</button><span class="num muted">${u.page} / ${pages}</span><button class="btn small" data-page="${u.page+1}" ${u.page>=pages?'disabled':''}>Suivant →</button></div>`:''}
+  </div>`}
+
+/* ---------- offres ---------- */
+function viewOffres(){const o=S.offres;const u=S.ui.offres;
+  if(!o||!(o.items||[]).length)return `<div class="stack"><div class="panel"><h2>Offres de produits scellés</h2><p class="muted">Importe le fichier <span class="mono">sealed-prices.json</span> produit par ton scraper (Nevermint, Cardcosmos) avec le bouton « Importer un CSV » : il accepte aussi ce fichier JSON.</p>${S.canWrite?'<button class="btn primary" data-act="import">Importer le fichier</button>':''}</div></div>`;
+  const types=[...new Set(o.items.map(x=>x.product_type))];const q=norm(u.q);
+  let rows=o.items.filter(x=>(u.type==='all'||x.product_type===u.type)&&(!q||norm((x.edition||'')+' '+(x.product_label||'')+' '+(x.store||'')).includes(q)));
+  rows.sort((a,b)=>{const av=a[u.sort]??'',bv=b[u.sort]??'';return (typeof av==='number'?av-bv:String(av).localeCompare(String(bv)))*u.dir});
+  const th=(k,l,cls='')=>`<th class="${cls}" data-osort="${k}">${l}${u.sort===k?(u.dir>0?' ↑':' ↓'):''}</th>`;
+  return `<div class="stack"><div class="row" style="justify-content:space-between"><h2>Offres de produits scellés</h2><span class="muted">Relevé du ${fmtDate(o.fetchedAt||o.importedAt)}</span></div>
+    <div class="filters"><input type="search" id="off-q" placeholder="Édition, produit, boutique" value="${esc(u.q)}" aria-label="Filtrer"><div class="seg" role="group">${['all',...types].map(t=>`<button type="button" data-otype="${esc(t)}" aria-pressed="${u.type===t}">${t==='all'?'Tout':esc(t.replace('_',' '))}</button>`).join('')}</div></div>
+    <div class="panel tablewrap" style="padding:0"><table><thead><tr>${th('edition','Édition')}${th('product_label','Produit')}${th('total_cards','Cartes','num')}${th('price','Prix','num')}${th('price_per_card','€/carte','num')}${th('store','Boutique')}<th>Lien</th></tr></thead><tbody>
+    ${rows.map(x=>`<tr><td>${esc(x.edition)}</td><td>${esc(x.product_label)}</td><td class="num mono">${x.total_cards??'—'}</td><td class="num mono">${x.price!=null?x.price.toFixed(2)+' €':'—'}</td><td class="num mono">${x.price_per_card!=null?x.price_per_card.toFixed(3)+' €':'—'}</td><td>${esc(x.store)}${x.in_stock===false?' <span class="pill bad">Rupture</span>':''}</td><td>${x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener">Voir ↗</a>`:'—'}</td></tr>`).join('')}
+    </tbody></table></div></div>`}
+
+/* ================= events ================= */
+function bind(r){const app=$('#app');
+  app.onclick=e=>{const t=e.target.closest('[data-act],[data-go],[data-card],[data-name],[data-page],[data-color],[data-swapview],[data-deckview],[data-otype],[data-osort]');if(!t||!app.contains(t))return;
+    if(t.dataset.go){location.hash=t.dataset.go;return}
+    if(t.dataset.page){S.ui.coll.page=+t.dataset.page;render();window.scrollTo(0,0);return}
+    if(t.dataset.color){const c=t.dataset.color,a=S.ui.coll.colors;const i=a.indexOf(c);if(i>=0)a.splice(i,1);else{if(c==='C'||c==='M')a.length=0;else{const j=a.indexOf('C');if(j>=0)a.splice(j,1);const m=a.indexOf('M');if(m>=0)a.splice(m,1)}a.push(c)}S.ui.coll.page=1;render();return}
+    if(t.dataset.swapview){S.ui.swapView[r.id]=t.dataset.swapview;render();return}
+    if(t.dataset.deckview){S.ui.deckView=t.dataset.deckview;render();return}
+    if(t.dataset.otype){S.ui.offres.type=t.dataset.otype;render();return}
+    if(t.dataset.osort){const k=t.dataset.osort;if(S.ui.offres.sort===k)S.ui.offres.dir*=-1;else{S.ui.offres.sort=k;S.ui.offres.dir=1}render();return}
+    const act=t.dataset.act;
+    if(!act&&(t.dataset.card!==undefined||t.dataset.name)){openCard(t.dataset.card,t.dataset.name);return}
+    const d=r.id&&S.decks[r.id]?{id:r.id,...S.decks[r.id]}:null;
+    switch(act){
+      case 'import':openImport();break;
+      case 'enrich':openEnrich();break;
+      case 'enrhide':S.enr=null;render();break;
+      case 'installupd':if(window.grimoireLocal&&window.grimoireLocal.installUpdate)window.grimoireLocal.installUpdate();break;
+      case 'newdeck':openDeckSettings(null,t.dataset.cont||'');break;
+      case 'settings':openDeckSettings(d);break;
+      case 'editlist':openListEditor(d);break;
+      case 'analyse':openAnalyse(d);break;
+      case 'unclamp':{const p=t.previousElementSibling;if(p)p.classList.remove('clamp');t.remove();break}
+      case 'unclampwhy':t.classList.toggle('clamp');break;
+      case 'edit':{const box=t.closest('[data-edit]');box.querySelector('.edit-view').hidden=true;box.querySelector('.edit-form').hidden=false;t.hidden=true;const ta=box.querySelector('textarea');ta.focus();break}
+      case 'cancel':render();break;
+      case 'save':saveField(d,t.dataset.field,t);break;
+      case 'delswap':delSwap(d,t.dataset.sid);break;
+      case 'archive':archiveApplied(d);break;
+    }};
+  app.oninput=e=>{const el=e.target;if(el.matches('textarea[data-keep]'))el.dataset.dirty='1';
+    if(el.id==='coll-q'){S.ui.coll.q=el.value;S.ui.coll.page=1;clearTimeout(bind._t);bind._t=setTimeout(render,180)}
+    if(el.id==='off-q'){S.ui.offres.q=el.value;clearTimeout(bind._t);bind._t=setTimeout(render,180)}};
+  app.onchange=e=>{const el=e.target;const m={'coll-type':'type','coll-rarity':'rarity','coll-cont':'cont','coll-sort':'sort','coll-fmt':'fmt'};
+    if(m[el.id]){S.ui.coll[m[el.id]]=el.value;S.ui.coll.page=1;render()}if(el.id==='coll-avail'){S.ui.coll.avail=el.checked;S.ui.coll.page=1;render()}};
+  // keep edit form open when re-rendered with a dirty value
+  document.querySelectorAll('#app textarea[data-dirty]').forEach(ta=>{const box=ta.closest('[data-edit]');box.querySelector('.edit-view').hidden=true;box.querySelector('.edit-form').hidden=false;const b=box.querySelector('[data-act=edit]');if(b)b.hidden=true});
+}
+async function saveField(d,field,btn){const ta=$('#ta-'+field);if(!d||!ta)return;btn.disabled=true;
+  try{await dbUpdate('decks/'+d.id,{[field]:ta.value,updatedAt:new Date().toISOString()});delete ta.dataset.dirty;toast(field==='notes'?'Notes enregistrées':'Stratégie enregistrée');render()}
+  catch(e){btn.disabled=false;toast('Échec de l\'enregistrement : '+(e.message||e.code))}}
+async function delSwap(d,sid){const doc=S.swaps[d.id];if(!doc)return;const items=(doc.items||[]).filter(s=>s.id!==sid);
+  try{await dbUpdate('swaps/'+d.id,{items});toast('Recommandation retirée')}catch(e){toast('Échec : '+(e.message||e.code))}}
+async function archiveApplied(d){const doc=S.swaps[d.id];if(!doc)return;const cards=deckCards(d);const inSet=new Set(cards.map(x=>x.n));
+  const keep=[],arch=[...(doc.archive||[])];const today=new Date().toISOString().slice(0,10);
+  for(const s of doc.items||[]){if(swapStatus(s,d,inSet).k==='applied')arch.push({out:s.out.fr||s.out.en,in:s.in.fr||s.in.en,date:today});else keep.push(s)}
+  try{await dbUpdate('swaps/'+d.id,{items:keep,archive:arch.slice(-300)});S.ui.swapView[d.id]='pending';toast(`${doc.items.length-keep.length} swap(s) archivé(s)`)}catch(e){toast('Échec : '+(e.message||e.code))}}
+
+/* ================= dialogs ================= */
+function openDlg(title,html){$('#dlg-title').textContent=title;$('#dlg-body').innerHTML=html;const d=$('#dlg');if(!d.open)d.showModal();return $('#dlg-body')}
+function openCard(key,name){let c=key?getCard(key):null;let k=key;if(!c&&name){const r=cardByName(name);if(r){c=r;k=r.key}}
+  const n=norm((c&&c.e)||name);const b=S.coll&&S.coll.byEn.get(n);const e=k&&S.coll&&S.coll.byKey.get(k);
+  const fr=(b&&b.fr)||(c&&c.f)||'';const en=(c&&c.e)||name||'';
+  const used=usage().get(n)||[];const [set,num]=(k||'|').split('|');
+  const conts=b?Object.entries(b.cont).sort((a,b)=>b[1]-a[1]).map(([cn,q])=>`<span class="pill">${esc(cn)} ×${q}</span>`).join(' '):'';
+  openDlg(fr||en,`${S.local?`<img class="bigimg" src="${esc(imgUrl(k,en))}" alt="${esc(fr||en)}">`:''}<div class="row" style="justify-content:space-between"><div>${fr&&fr!==en?`<div class="muted">${esc(en)}</div>`:''}<div>${esc(c&&c.t||'')}</div></div><div style="font-size:1.2rem">${c?mana(c.m):''}</div></div>
+    ${c&&c.o?`<div class="oracle">${oracleHTML(c.o)}</div>`:'<div class="alert warn"><div class="grow">Texte oracle absent : cette carte n\'est pas encore dans la base.</div></div>'}
+    <div class="two"><div><h3>Possédées</h3><p class="num" style="margin:4px 0">${b?b.q:0} exemplaire${b&&b.q>1?'s':''}${!isBasic(n)&&b?` · ${Math.max(0,availFor(n,null))} libre(s)`:''}</p><div class="row" style="gap:4px">${conts}</div></div>
+    <div><h3>Dans les decks</h3><p style="margin:4px 0">${used.length?used.map(u=>`<a href="#deck-${esc(u.id)}">${esc(u.name)}</a> ×${u.q}`).join(', '):'<span class="muted">Aucun</span>'}</p>
+    <h3 style="margin-top:8px">Légalité</h3><p style="margin:4px 0">${c&&c.l!==undefined?`${c.l.includes('C')?'<span class="pill ok">Commander</span>':'<span class="pill bad">Commander</span>'} ${c.l.includes('P')?'<span class="pill ok">Pauper</span>':'<span class="pill bad">Pauper</span>'}`:'<span class="muted">Inconnue</span>'}</p></div></div>
+    <div class="row" style="justify-content:space-between"><span class="muted mono">${set?esc(set.toUpperCase())+' #'+esc(num):''}${e&&e.eur?' · '+e.eur.toFixed(2)+' €':''}</span><a href="${scryUrl(set,num,en)}" target="_blank" rel="noopener">Voir sur Scryfall ↗</a></div>`)}
+
+/* ---------- import ---------- */
+function openImport(){const body=openDlg('Importer',`<p class="muted" style="margin:0">Dépose ton export complet Mythic Tools (<span class="mono">.csv</span>) pour mettre à jour la collection et les decks, ou ton relevé <span class="mono">sealed-prices.json</span> pour l'onglet Offres.</p>
+  <div class="drop" id="drop" tabindex="0" role="button"><b>Choisir un fichier</b><br><span class="muted">ou le glisser ici</span></div><div id="imp-status"></div>`);
+  const dz=body.querySelector('#drop');dz.onclick=()=>$('#file-input').click();dz.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#file-input').click()}};
+  dz.ondragover=e=>{e.preventDefault();dz.classList.add('over')};dz.ondragleave=()=>dz.classList.remove('over');dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f)handleFile(f)}}
+function impStatus(html){const el=$('#imp-status');if(el)el.innerHTML=html}
+async function handleFile(f){if(!$('#dlg').open)openImport();
+  const txt=await f.text();
+  if(/\.json$/i.test(f.name)||txt.trim().startsWith('[')||txt.trim().startsWith('{')){return importOffres(f,txt)}
+  const p=parseCSV(txt);const miss=REQ.filter(h=>!p.headers.includes(h));
+  if(miss.length){impStatus(`<div class="alert bad"><div class="grow">Ce fichier n'est pas un export Mythic Tools : colonnes manquantes (${miss.map(esc).join(', ')}).</div></div>`);return}
+  const coll=buildColl(p.rows);
+  const diff=diffColl(S.coll,coll);
+  if(!S.db||!S.assets){S.coll=coll;_usage=null;impStatus(`<div class="alert warn"><div class="grow">${coll.total} cartes chargées pour cette session uniquement : l'enregistrement en ligne n'est pas disponible ici.</div></div>`);render();return}
+  impStatus(`<div class="alert"><div class="grow">Enregistrement de ${coll.total.toLocaleString('fr-FR')} cartes…</div></div>`);
+  try{const up=await S.assets.upload(new Blob([txt],{type:'text/csv'}),{type:'text/csv'});
+    const prev=S.state||{};const hist=[...(prev.history||[])];if(prev.csv)hist.unshift(prev.csv);
+    const csv={id:up.id,name:f.name,size:up.sizeBytes,rows:p.rows.length,total:coll.total,uploadedAt:new Date().toISOString()};
+    S.coll=coll;S.csvId=up.id;_usage=null;
+    await dbSet('app/state',{csv,history:hist.slice(0,12),lastDiff:diff});
+    const unk=unknownKeys().length;
+    impStatus(`<div class="alert ok"><div class="grow"><b>Collection mise à jour.</b> ${coll.total.toLocaleString('fr-FR')} cartes, ${coll.unique.toLocaleString('fr-FR')} uniques. ${diff?`+${diff.addedQ} / −${diff.removedQ} cartes depuis le précédent import.`:''} ${unk?`${unk} carte(s) à compléter.`:''}</div></div>
+      <div class="row">${unk?'<button class="btn primary" id="imp-enrich">Compléter les cartes</button>':''}<button class="btn" id="imp-done">Fermer</button></div>`);
+    const b1=$('#imp-enrich');if(b1)b1.onclick=openEnrich;$('#imp-done').onclick=()=>$('#dlg').close();render();
+    if(unk&&(S.local||S.mcp)){toast(`Collection mise à jour : +${diff?diff.addedQ:0} / −${diff?diff.removedQ:0} cartes`);runEnrich(unknownKeys());openEnrich()}}
+  catch(e){impStatus(`<div class="alert bad"><div class="grow">L'enregistrement a échoué (${esc(e.code||e.message)}). Réessaie dans un instant.</div></div>`)}}
+function diffColl(a,b){if(!a)return null;const add=[],rem=[];let aq=0,rq=0;const fmt=(n,bb,q)=>({en:bb.en,fr:bb.fr||'',q});
+  for(const [n,x] of b.byEn){const old=a.byEn.get(n);const d=x.q-(old?old.q:0);if(d>0){add.push(fmt(n,x,d));aq+=d}}
+  for(const [n,x] of a.byEn){const nw=b.byEn.get(n);const d=(nw?nw.q:0)-x.q;if(d<0){rem.push(fmt(n,x,d));rq+=-d}}
+  add.sort((x,y)=>y.q-x.q);rem.sort((x,y)=>x.q-y.q);
+  return {at:new Date().toISOString(),addedQ:aq,removedQ:rq,addedN:add.length,removedN:rem.length,added:add.slice(0,60),removed:rem.slice(0,60)}}
+async function importOffres(f,txt){let data;try{data=JSON.parse(txt)}catch(e){impStatus('<div class="alert bad"><div class="grow">Ce JSON est illisible.</div></div>');return}
+  const items=(Array.isArray(data)?data:(data.products||data.items||[])).map(x=>({edition:x.edition||'',set_code:x.set_code||'',product_type:x.product_type||'',product_label:x.product_label||'',total_cards:x.total_cards??null,price:typeof x.price==='number'?x.price:parseFloat(x.price)||null,price_per_card:typeof x.price_per_card==='number'?x.price_per_card:null,store:x.store||'',url:x.url||'',in_stock:x.in_stock!==false,fetched_at:x.fetched_at||''}));
+  if(!items.length){impStatus('<div class="alert bad"><div class="grow">Aucun produit trouvé dans ce fichier.</div></div>');return}
+  const fetchedAt=items.map(x=>x.fetched_at).filter(Boolean).sort().pop()||'';
+  if(!S.db){S.offres={items,fetchedAt};render();impStatus('<div class="alert warn"><div class="grow">Offres chargées pour cette session uniquement.</div></div>');return}
+  try{await dbSet('app/offres',{items,fetchedAt,importedAt:new Date().toISOString(),file:f.name});impStatus(`<div class="alert ok"><div class="grow">${items.length} offres importées.</div></div>`);location.hash='offres'}
+  catch(e){impStatus(`<div class="alert bad"><div class="grow">L'enregistrement a échoué (${esc(e.code||e.message)}).</div></div>`)}}
+
+/* ---------- enrichment via Claude's browser + Scryfall ---------- */
+function fmtEta(s){s=Math.max(1,Math.round(s));return s<60?`${s} s`:s<3600?`${Math.round(s/60)} min`:`${Math.floor(s/3600)} h ${Math.round(s%3600/60)} min`}
+function enrProgressHTML(){const p=S.enr;if(!p)return '';const pct=p.total?Math.floor(p.processed/p.total*100):0;const el=(Date.now()-p.startedAt)/1000;
+  const eta=p.running&&p.processed>0?el/p.processed*(p.total-p.processed):null;
+  return `<div class="stack" style="gap:6px"><div class="row" style="justify-content:space-between"><b>${p.running?'Intégration des nouvelles cartes…':(p.stopped?'Intégration arrêtée':'Intégration terminée')}</b><span class="num">${p.processed.toLocaleString('fr-FR')} / ${p.total.toLocaleString('fr-FR')} · ${pct} %</span></div>
+  <div class="progress" role="progressbar" aria-label="Avancement" aria-valuemin="0" aria-valuemax="${p.total}" aria-valuenow="${p.processed}"><i style="width:${pct}%"></i></div>
+  <div class="muted" style="font-size:.85rem">${p.done.toLocaleString('fr-FR')} ajoutée(s)${p.fail.length?` · ${p.fail.length} introuvable(s)`:''}${eta!=null?` · environ ${fmtEta(eta)} restante(s)`:` · ${fmtEta(el)} au total`}${p.msg?' · '+esc(p.msg):''}</div></div>`}
+let _enrT=0;function enrUpdate(force){const now=Date.now();if(!force&&now-_enrT<150)return;_enrT=now;
+  for(const id of ['enr-prog','enr-strip']){const el=document.getElementById(id);if(el)el.innerHTML=enrProgressHTML()}
+  const l=$('#enr-log');if(l&&S.enr){l.textContent=S.enr.log.join('\n');l.scrollTop=1e9}
+  const st=$('#enr-stop');if(st)st.hidden=!(S.enr&&S.enr.running)}
+function openEnrich(){const running=S.enr&&S.enr.running;const unk=unknownKeys();
+  const intro=S.local?'Grimoire lit leurs fiches sur Scryfall puis les enregistre dans la base.':'La page lit leurs fiches sur Scryfall via le navigateur intégré de l\'app Claude desktop, puis les enregistre dans la base.';
+  openDlg('Compléter les cartes',`${running||S.enr?'':`<p style="margin:0">${unk.length} carte(s) du CSV n'ont pas encore de texte oracle. ${intro}</p>`}
+  ${!S.mcp&&!S.local?'<div class="alert warn"><div class="grow">Le navigateur intégré n\'est pas accessible depuis cette vue. Ouvre cette page dans l\'app Claude desktop pour compléter les cartes.</div></div>':''}
+  <div id="enr-prog">${enrProgressHTML()}</div>
+  <div class="log" id="enr-log">${S.enr?esc(S.enr.log.join('\n')):unk.slice(0,40).map(e=>esc(`${e.set.toUpperCase()} #${e.num} · ${e.fr||e.en}`)).join('\n')+(unk.length>40?'\n…':'')}</div>
+  <p class="muted" style="margin:0;font-size:.85rem">Tu peux fermer cette fenêtre : l'intégration continue et la barre reste visible en haut de la page.</p>
+  <div class="row">${!running&&unk.length?`<button class="btn primary" id="enr-go" ${(!S.mcp&&!S.local)?'disabled':''}>${S.enr?'Relancer pour les cartes restantes':'Lancer'}</button>`:''}<button class="btn" id="enr-stop" ${running?'':'hidden'}>Arrêter</button><button class="btn" id="enr-close">Fermer</button></div>`);
+  const l=$('#enr-log');if(l)l.scrollTop=1e9;
+  $('#enr-close').onclick=()=>$('#dlg').close();$('#enr-stop').onclick=()=>{if(S.enr){S.enr.stop=true;S.enr.msg='arrêt après le lot en cours'};enrUpdate(true)};
+  const go=$('#enr-go');if(go)go.onclick=()=>{runEnrich(unknownKeys());openEnrich()}}
+function scryToCard(c,key,fr){const f=c.card_faces||[];const lg=c.legalities||{};
+  return {key,e:c.name,f:fr&&fr!==c.name?fr:undefined,o:c.oracle_text!=null?c.oracle_text:f.map(x=>x.name+' — '+(x.oracle_text||'')).join('\n\n'),c:c.cmc||0,k:(c.color_identity||[]).join(''),m:c.mana_cost!=null&&c.mana_cost!==''?c.mana_cost:((f[0]&&f[0].mana_cost)||''),t:c.type_line||(f.map(x=>x.type_line).join(' // ')),r:c.rarity||'',l:(lg.pauper==='legal'?'P':'')+(lg.commander==='legal'?'C':''),src:'scryfall',at:new Date().toISOString()}}
+async function browserJson(url){await S.mcp.callTool('host:claude_browser','navigate',{url});
+  const r=await S.mcp.callTool('host:claude_browser','get_page_text',{max_chars:900000});
+  let txt=typeof r.payload==='string'?r.payload:((r.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'));
+  if(r.payload&&typeof r.payload==='object'&&r.payload.object)return r.payload;
+  const i=txt.indexOf('{'),j=txt.lastIndexOf('}');if(i<0||j<i)throw new Error('Réponse Scryfall illisible');return JSON.parse(txt.slice(i,j+1))}
+async function pool(fns,n){let i=0;await Promise.all(Array.from({length:Math.min(n,fns.length)},async()=>{while(i<fns.length){const f=fns[i++];await f()}}))}
+async function runEnrich(unk){if((S.enr&&S.enr.running)||!unk.length||(!S.mcp&&!S.local))return;
+  const p=S.enr={total:unk.length,done:0,processed:0,fail:[],startedAt:Date.now(),running:true,stop:false,stopped:false,log:[],msg:''};
+  const say=s=>{p.log.push(s);if(p.log.length>400)p.log.shift();enrUpdate()};
+  render();const BS=S.local?70:12;const nb=Math.ceil(unk.length/BS);
+  try{for(let i=0,n=1;i<unk.length;i+=BS,n++){if(p.stop){p.stopped=true;break}
+    const batch=unk.slice(i,i+BS);p.msg=`lot ${n}/${nb}`;say(`Lot ${n}/${nb} : ${batch.length} carte(s)…`);
+    let found=new Map(),fatal=null;
+    try{if(S.local){const res=await window.grimoireLocal.fetchJson('https://api.scryfall.com/cards/collection',{method:'POST',body:JSON.stringify({identifiers:batch.map(e=>({set:e.set,collector_number:e.num}))})});for(const c of res.data||[])found.set((c.set+'|'+c.collector_number).toLowerCase(),c)}
+      else{const q=batch.map(e=>`(e:${e.set} cn:"${e.num}")`).join(' or ');let res=await browserJson('https://api.scryfall.com/cards/search?q='+encodeURIComponent(q)+'&unique=prints&include_extras=true&include_variations=true');for(const c of res.data||[])found.set((c.set+'|'+c.collector_number).toLowerCase(),c);
+        if(res.has_more&&res.next_page){res=await browserJson(res.next_page);for(const c of res.data||[])found.set((c.set+'|'+c.collector_number).toLowerCase(),c)}}}
+    catch(e){if(e&&e.code==='not_granted')fatal='Accès au navigateur refusé.';else if(e&&(e.code==='server_not_connected'||e.code==='not_in_manifest'))fatal='Navigateur intégré indisponible : ouvre la page dans l\'app Claude desktop.';else say('  Échec de la recherche ('+(e.code||e.message)+')')}
+    if(fatal){say(fatal);p.msg=fatal;p.stopped=true;break}
+    await pool(batch.map(e=>async()=>{const c=found.get(e.key);
+      if(!c){p.fail.push(e);say(`  ✗ ${e.set.toUpperCase()} #${e.num} ${e.fr||e.en} : introuvable`)}
+      else{const doc=scryToCard(c,e.key,e.fr);Object.keys(doc).forEach(k=>doc[k]===undefined&&delete doc[k]);
+        try{await dbSet('cards_extra/'+docIdForKey(e.key),doc);S.extra[e.key]=doc;p.done++;say(`  ✓ ${doc.f||doc.e}`)}catch(err){p.fail.push(e);say(`  ✗ ${e.en} (${err.code||err.message})`)}}
+      p.processed++;enrUpdate()}),6);
+    await new Promise(r=>setTimeout(r,S.local?80:250))}}
+  finally{p.running=false;p.msg='';rebuildIndex();say(`\n${p.stopped?'Arrêté':'Terminé'} : ${p.done} carte(s) ajoutée(s)${p.fail.length?`, ${p.fail.length} introuvable(s)`:''}.`);
+    enrUpdate(true);render();toast(`${p.done} carte(s) intégrée(s) à la base`)}}
+
+/* ---------- deck settings ---------- */
+function openDeckSettings(d,cont){const isNew=!d;d=d||{name:cont?cont.replace(/ - main$/i,''):'',format:'Commander',container:cont||'',side:'',commander:'',difficulty:''};
+  const conts=S.coll?[...S.coll.conts.values()].sort((a,b)=>a.name.localeCompare(b.name)):[];
+  const opt=(v,cur)=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(v||'— aucun —')}</option>`;
+  const body=openDlg(isNew?'Nouveau deck':'Réglages du deck',`<div class="two">
+    <div class="field"><label for="ds-name">Nom</label><input id="ds-name" value="${esc(d.name)}"></div>
+    <div class="field"><label for="ds-format">Format</label><select id="ds-format">${['Commander','Pauper','Standard','Modern','Autre'].map(f=>opt(f,d.format)).join('')}</select></div>
+    <div class="field"><label for="ds-cont">Classeur Mythic Tools (liste principale)</label><select id="ds-cont">${opt('',d.container)}${conts.map(c=>opt(c.name,d.container)).join('')}</select></div>
+    <div class="field"><label for="ds-side">Classeur réserve (optionnel)</label><select id="ds-side">${opt('',d.side)}${conts.map(c=>opt(c.name,d.side)).join('')}</select></div>
+    <div class="field"><label for="ds-cmd">Commandant (nom anglais)</label><input id="ds-cmd" value="${esc(d.commander)}" list="ds-cmd-list"></div>
+    <div class="field"><label for="ds-diff">Difficulté</label><input id="ds-diff" value="${esc(d.difficulty||'')}"></div>
+    <div class="field"><label for="ds-max">Swaps max par analyse</label><input id="ds-max" type="number" min="1" max="50" value="${d.maxSwaps||10}"></div></div>
+    <p class="muted" style="margin:0;font-size:.85rem">Sans classeur, le deck est une liste manuelle (bouton « Modifier la liste ») ; ses cartes restent réservées dans le calcul de disponibilité.</p>
+    <div class="row"><button class="btn primary" id="ds-save">Enregistrer</button><button class="btn" id="ds-cancel">Annuler</button>${!isNew?'<span class="spacer"></span><button class="btn danger" id="ds-del">Supprimer le deck</button>':''}</div><div id="ds-msg"></div>`);
+  $('#ds-cancel').onclick=()=>$('#dlg').close();
+  $('#ds-save').onclick=async()=>{const data={name:$('#ds-name').value.trim()||'Sans nom',format:$('#ds-format').value,container:$('#ds-cont').value,side:$('#ds-side').value,commander:$('#ds-cmd').value.trim(),difficulty:$('#ds-diff').value.trim(),maxSwaps:Math.max(1,Math.min(50,+$('#ds-max').value||10)),updatedAt:new Date().toISOString()};
+    if(data.commander&&!cardByName(data.commander)){$('#ds-msg').innerHTML='<div class="alert warn"><div class="grow">Commandant introuvable dans la base : vérifie le nom anglais exact.</div></div>';return}
+    try{if(isNew){let id=slug(data.name);while(S.decks[id])id+='-2';await dbSet('decks/'+id,{...data,order:deckList().length+1,strat:'',notes:'',list:[]});await dbSet('swaps/'+id,{intro:'',items:[],acq:[]});$('#dlg').close();location.hash='deck-'+id}
+      else{await dbUpdate('decks/'+d.id,data);$('#dlg').close();toast('Réglages enregistrés')}}catch(e){$('#ds-msg').innerHTML=`<div class="alert bad"><div class="grow">Échec (${esc(e.code||e.message)}).</div></div>`}};
+  const del=$('#ds-del');if(del)del.onclick=async()=>{if(del.dataset.confirm!=='1'){del.dataset.confirm='1';del.textContent='Confirmer la suppression';return}
+    try{await serial('decks/'+d.id,()=>S.db.doc('decks/'+d.id).delete());await serial('swaps/'+d.id,()=>S.db.doc('swaps/'+d.id).delete());$('#dlg').close();location.hash='decks';toast('Deck supprimé')}catch(e){toast('Échec : '+(e.code||e.message))}}}
+function openListEditor(d){const txt=(d.list||[]).map(x=>`${x.qty} ${x.en}`).join('\n');
+  openDlg('Liste de '+d.name,`<p class="muted" style="margin:0">Une carte par ligne : quantité puis nom anglais ou français (ex. « 1 Sol Ring »).</p><textarea class="edit" id="le-ta" style="min-height:320px">${esc(txt)}</textarea><div id="le-msg"></div><div class="row"><button class="btn primary" id="le-save">Enregistrer</button><button class="btn" id="le-cancel">Annuler</button></div>`);
+  $('#le-cancel').onclick=()=>$('#dlg').close();
+  $('#le-save').onclick=async()=>{const list=[],bad=[];for(const line of $('#le-ta').value.split('\n')){const m=line.trim().match(/^(\d+)\s*x?\s+(.+)$/i);if(!line.trim())continue;const q=m?+m[1]:1,nm=(m?m[2]:line).trim();const c=cardByName(nm);if(!c)bad.push(nm);list.push({en:c?c.e:nm,qty:q})}
+    if(bad.length&&$('#le-save').dataset.force!=='1'){$('#le-msg').innerHTML=`<div class="alert warn"><div class="grow">Introuvables dans la base : ${bad.map(esc).join(', ')}. Clique encore sur Enregistrer pour les garder quand même.</div></div>`;$('#le-save').dataset.force='1';return}
+    try{await dbUpdate('decks/'+d.id,{list,updatedAt:new Date().toISOString()});$('#dlg').close();toast('Liste enregistrée')}catch(e){$('#le-msg').innerHTML=`<div class="alert bad"><div class="grow">Échec (${esc(e.code||e.message)}).</div></div>`}}}
+
+/* ---------- Claude analysis ---------- */
+function openAnalyse(d){const max=d.maxSwaps||10;
+  const body=openDlg('Réévaluer '+d.name,`<p style="margin:0">Claude relit la liste avec les textes oracle, cherche dans ta collection les cartes libres compatibles, puis propose jusqu'à ${max} swaps de cartes et des ajustements de terrains.</p>
+  <div class="field"><label for="an-focus">Axe à renforcer (optionnel)</label><textarea id="an-focus" class="edit" style="min-height:70px" placeholder="Ex. : plus de pioche, protéger le commandant contre les wraths, réduire la courbe…"></textarea></div>
+  <div class="row"><button class="btn primary" id="an-go">Lancer l'analyse</button><button class="btn" id="an-stop" hidden>Arrêter</button></div>
+  <div class="log" id="an-log" hidden></div><div id="an-out"></div>`);
+  let ctl=null;$('#an-stop').onclick=()=>ctl&&ctl.abort();
+  $('#an-go').onclick=async()=>{const go=$('#an-go');go.disabled=true;$('#an-stop').hidden=false;const log=$('#an-log');log.hidden=false;log.textContent='Claude réfléchit…';
+    ctl=new AbortController();const say=s=>{log.textContent+='\n'+s;log.scrollTop=1e9};
+    try{const res=await runAnalysis(d,$('#an-focus').value.trim(),say,ctl.signal);showAnalysis(d,res)}
+    catch(e){const msg={not_granted:'Accès à Claude refusé pour cette page.',rate_limited:'Limite d\'utilisation atteinte : réessaie plus tard.',cancelled:'Analyse arrêtée.'}[e.code]||('L\'analyse a échoué ('+(e.code||e.message)+').');say(msg)}
+    finally{go.disabled=false;$('#an-stop').hidden=true}}}
+function cardLine(x){const c=x.card||{};return `${x.qty}x ${x.en}${x.fr&&x.fr!==x.en?` [FR: ${x.fr}]`:''}${x.isCmd?' (COMMANDANT)':''} | ${c.m||'-'} | ${c.t||'?'} | ${(c.o||'(oracle inconnu)').replace(/\n/g,' / ')}`}
+async function runAnalysis(d,focus,say,signal){const cards=deckCards(d);const st=deckStats(d,cards);const doc=S.swaps[d.id]||{};const inSet=new Set(cards.map(x=>x.n));
+  const pending=(doc.items||[]).filter(s=>swapStatus(s,d,inSet).k!=='applied').map(s=>`${s.out.en} -> ${s.in.en}`);
+  const max=d.maxSwaps||10;const fmtCode=d.format==='Pauper'?'P':'C';
+  const prompt=`Tu es l'expert Magic: The Gathering de Fred. Tu réévalues un de ses decks et tu proposes des swaps UNIQUEMENT avec des cartes de sa collection qui sont libres (pas utilisées dans un autre deck).
+
+RÈGLES ABSOLUES
+- Ne décris jamais une carte sans avoir lu son texte oracle (fourni ci-dessous pour le deck, via les outils pour la collection). Lis l'oracle EN ENTIER.
+- Chaque carte IN doit venir de search_collection ou get_card avec avail >= 1, être dans l'identité de couleur ${st.id||'incolore'} et légale en ${d.format}.
+- Chaque carte OUT doit être dans la liste actuelle. Ne propose jamais le commandant en OUT. Si les notes disent que Fred tient à une carte, ne la sors pas.
+- Effets landfall multiples = effet cumulatif puissant, jamais redondant. Seuls les effets permanents (marqueurs +1/+1, jetons, récursion) ou la pioche comptent ; un bonus temporaire (+X/+X jusqu'à la fin du tour) n'intéresse pas Fred.
+- Les grosses créatures sont une condition de victoire valable (elles créent de l'urgence).
+- Au plus ${max} swaps de cartes. Pas obligé de les remplir si rien n'est convaincant. Ne repropose pas un swap déjà en attente.
+- Ajoute des ajustements de terrains (kind "basics" pour échanger des terrains de base, kind "land" pour un terrain non-basique) si la production de couleur ne colle pas à la demande.
+- Raisons courtes en français (2-3 phrases), qui citent le mécanisme exact de l'oracle.
+
+DECK : ${d.name} — format ${d.format}${d.commander?` — commandant ${d.commander}`:''} — identité ${st.id||'incolore'}
+Stratégie actuelle : ${d.strat||'(aucune)'}
+Notes de Fred : ${d.notes||'(aucune)'}
+${focus?`AXE DEMANDÉ PAR FRED : ${focus}\n`:''}Stats : ${st.total} cartes, CMC moyen ${st.avg.toFixed(2)}, ${st.landq} terrains dont ${st.basicsq} de base. Courbe 0..7+ : ${st.curve.join('/')}. Symboles de mana par couleur : ${COLORS.filter(c=>st.id.includes(c)).map(c=>c+'='+st.demand[c].toFixed(1)).join(', ')}. Sources terrain : ${COLORS.filter(c=>st.id.includes(c)).map(c=>c+'='+st.sources[c]).join(', ')}.
+Swaps déjà en attente : ${pending.join(' ; ')||'aucun'}
+
+LISTE ACTUELLE (qty | nom | coût | type | oracle)
+${cards.map(cardLine).join('\n')}
+
+Utilise search_collection plusieurs fois (par mots-clés oracle liés aux axes du deck) avant de conclure.
+RÉPONSE FINALE : uniquement un objet JSON, sans texte autour :
+{"strategy":"2-4 phrases : comment jouer le deck, axes, plan de victoire (après tes swaps)","intro":"1-3 phrases : quelle amélioration ces swaps cherchent","swaps":[{"out":"nom anglais exact","in":"nom anglais exact","reason":"..."}],"lands":[{"kind":"basics|land","out":"nom anglais","in":"nom anglais","qty":1,"reason":"..."}]}`;
+  const tools=[{name:'search_collection',description:'Cherche dans la collection de Fred les cartes LIBRES (avail>=1), hors de ce deck, dans l\'identité de couleur du deck et légales dans son format. Retourne jusqu\'à 30 cartes avec nom anglais, nom FR, coût, type, oracle complet et quantité libre.',
+      inputSchema:{type:'object',properties:{text:{type:'string',description:'Mots à trouver tous dans le nom, le type ou l\'oracle (anglais), ex. "draw a card" ou "+1/+1 counter"'},type:{type:'string',enum:['Créature','Éphémère','Rituel','Artéfact','Enchantement','Planeswalker','Terrain']},max_cmc:{type:'number'},limit:{type:'number'}}},
+      execute:(inp)=>{const terms=norm(String(inp.text||'')).split(' ').filter(Boolean);const type=inp.type?String(inp.type):'';const mx=inp.max_cmc!=null?Number(inp.max_cmc):99;const lim=Math.min(30,Number(inp.limit)||25);
+        say(`🔎 ${inp.text||''}${type?' · '+type:''}${inp.max_cmc!=null?' · CMC≤'+mx:''}`);const out=[];
+        for(const [n,b] of S.coll.byEn){if(inSet.has(n)||isBasic(n))continue;const {card}=nameInfo(n);if(!card||!card.o&&!card.t)continue;
+          if(!withinIdentity(card.k,st.id))continue;if(card.l!==undefined&&!card.l.includes(fmtCode))continue;if(type&&catOf(card,false)!==type)continue;if((card.c||0)>mx)continue;
+          if(terms.length){const hay=norm(card.e+' '+(card.t||'')+' '+(card.o||''));if(!terms.every(t=>hay.includes(t)))continue}
+          const av=availFor(n,d.id);if(av<1)continue;out.push({en:card.e,fr:b.fr||card.f||'',mana:card.m,type:card.t,cmc:card.c,oracle:card.o,avail:av});if(out.length>=lim)break}
+        return out}},
+    {name:'get_card',description:'Lit une carte par nom (anglais ou français) : oracle complet, coût, type, identité, légalité, quantité possédée, quantité libre pour ce deck, et si elle est déjà dans le deck.',
+      inputSchema:{type:'object',properties:{name:{type:'string'}},required:['name']},
+      execute:(inp)=>{const c=cardByName(String(inp.name||''));if(!c)throw new Error('Carte inconnue de la base : '+inp.name);const n=norm(c.e);say(`📖 ${c.e}`);
+        return {en:c.e,fr:c.f||frOf(c.e),mana:c.m,type:c.t,cmc:c.c,identity:c.k,oracle:c.o,legal_commander:(c.l||'').includes('C'),legal_pauper:(c.l||'').includes('P'),owned:owned(n),avail:availFor(n,d.id),in_deck:inSet.has(n)}}}];
+  const res=await S.sample.json(prompt,{tools,modelTier:'complex',signal,cache:false,onText:()=>{}});
+  return validate(d,res,cards,st,max)}
+function validate(d,res,cards,st,max){const inSet=new Set(cards.map(x=>x.n));const ok=[],bad=[];const usedIn=new Set();
+  for(const s of (res&&res.swaps)||[]){const o=cardByName(s.out),i=cardByName(s.in);const on=norm(o?o.e:s.out),inn=norm(i?i.e:s.in);
+    let why='';if(!inSet.has(on))why='OUT absent du deck';else if(norm(d.commander)===on)why='OUT = commandant';else if(!i)why='IN inconnue';else if(inSet.has(inn))why='IN déjà dans le deck';else if(availFor(inn,d.id)<1)why='IN non disponible';else if(!withinIdentity(i.k,st.id))why='IN hors identité';else if(usedIn.has(inn))why='IN proposée deux fois';
+    if(why)bad.push({...s,why});else{usedIn.add(inn);ok.push({kind:'card',out:{en:o.e,fr:o.f||frOf(o.e)},in:{en:i.e,fr:i.f||frOf(i.e)},qty:1,reason:s.reason||''})}}
+  for(const s of (res&&res.lands)||[]){const o=cardByName(s.out),i=cardByName(s.in);const kind=s.kind==='basics'?'basics':'land';
+    if(!o||!i){bad.push({...s,why:'Terrain inconnu'});continue}
+    if(kind==='land'&&availFor(norm(i.e),d.id)<1&&!isBasic(i.e)){bad.push({...s,why:'IN non disponible'});continue}
+    ok.push({kind,out:{en:o.e,fr:o.f||frOf(o.e)},in:{en:i.e,fr:i.f||frOf(i.e)},qty:Math.max(1,+s.qty||1),reason:s.reason||''})}
+  return {strategy:res&&res.strategy||'',intro:res&&res.intro||'',ok:ok.slice(0,max+10),bad}}
+function showAnalysis(d,res){const out=$('#an-out');if(!out)return;
+  out.innerHTML=`<div class="stack" style="gap:10px">${res.strategy?`<div><h3>Stratégie proposée</h3><p class="prose" style="margin:4px 0">${esc(res.strategy)}</p></div>`:''}
+    <div><h3>${res.ok.length} recommandation(s)</h3>${res.ok.map(s=>`<div class="swap"><div class="pair"><span class="out">${esc(s.out.fr||s.out.en)}</span><span class="arrow">→</span><span>${s.qty>1?s.qty+'× ':''}${esc(s.in.fr||s.in.en)}</span><span class="pill">${s.kind==='card'?'carte':'terrain'}</span></div><div class="why">${esc(s.reason)}</div></div>`).join('')||'<p class="muted">Aucune.</p>'}</div>
+    ${res.bad.length?`<details><summary>${res.bad.length} proposition(s) écartée(s) par les contrôles</summary>${res.bad.map(s=>`<div class="muted" style="font-size:.85rem">${esc(s.out)} → ${esc(s.in)} : ${esc(s.why)}</div>`).join('')}</details>`:''}
+    ${S.canWrite?`<label class="row" style="gap:6px"><input type="checkbox" id="an-strat" ${res.strategy?'checked':''}> Remplacer le texte de stratégie et l'intro des swaps</label>
+    <div class="row"><button class="btn primary" id="an-save" ${!res.ok.length&&!res.strategy?'disabled':''}>Ajouter aux recommandations</button></div>`:''}</div>`;
+  const sv=$('#an-save');if(sv)sv.onclick=async()=>{sv.disabled=true;const doc=S.swaps[d.id]||{items:[],acq:[]};const stamp=new Date().toISOString().slice(0,10);
+    const items=[...(doc.items||[]),...res.ok.map((s,i)=>({...s,id:'a'+Date.now().toString(36)+i,src:'analyse Claude',added:stamp}))];
+    try{const repl=$('#an-strat')&&$('#an-strat').checked;
+      if(S.swaps[d.id])await dbUpdate('swaps/'+d.id,{items,...(repl&&res.intro?{intro:stamp+' : '+res.intro}:{})});else await dbSet('swaps/'+d.id,{intro:repl?res.intro:'',items,acq:[]});
+      if(repl&&res.strategy)await dbUpdate('decks/'+d.id,{strat:res.strategy,updatedAt:new Date().toISOString()});
+      $('#dlg').close();S.ui.swapView[d.id]='pending';toast(`${res.ok.length} recommandation(s) ajoutée(s)`)}catch(e){sv.disabled=false;toast('Échec : '+(e.code||e.message))}}}
+
+boot();
+</script>

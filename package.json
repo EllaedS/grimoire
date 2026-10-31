@@ -1,0 +1,34 @@
+{
+  "name": "grimoire",
+  "productName": "Grimoire",
+  "version": "1.2.0",
+  "description": "Grimoire - collection et decks Magic: The Gathering",
+  "main": "main.js",
+  "author": "Fred",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never",
+    "release": "electron-builder --win --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "6.3.9"
+  },
+  "devDependencies": {
+    "electron": "32.3.3",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.ellaeds.grimoire",
+    "productName": "Grimoire",
+    "files": ["main.js", "preload.js", "web/**", "package.json"],
+    "directories": { "output": "dist" },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "artifactName": "Grimoire-Setup-${version}.${ext}"
+    },
+    "nsis": { "oneClick": true, "perMachine": false, "deleteAppDataOnUninstall": false, "shortcutName": "Grimoire" },
+    "publish": [{ "provider": "github", "owner": "EllaedS", "repo": "grimoire", "releaseType": "release" }]
+  }
+}
