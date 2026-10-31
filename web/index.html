@@ -281,8 +281,17 @@ function frOf(en){const n=norm(en);const {b,card}=nameInfo(n);return (b&&b.fr)||
 function deckList(){return Object.entries(S.decks).map(([id,d])=>({id,...d})).sort((a,b)=>(a.order||99)-(b.order||99)||a.name.localeCompare(b.name))}
 function contCards(cont){const m=new Map();if(!S.coll||!cont)return m;
   for(const [n,b] of S.coll.byEn){const q=b.cont[cont];if(q)m.set(n,q)}return m}
-function deckQtyMap(d,side){if(d.container){return contCards(side?d.side:d.container)}
-  const m=new Map();if(side)return m;for(const x of d.list||[]){const n=norm(x.en);m.set(n,(m.get(n)||0)+(+x.qty||1))}return m}
+function isFrozen(d){return !!(d.container&&S.coll&&!S.coll.conts.has(d.container))}
+function deckQtyMap(d,side){if(d.container&&!isFrozen(d)){return contCards(side?d.side:d.container)}
+  const m=new Map();const arr=side?(d.container?(d.sideList||[]):[]):(d.list||[]);for(const x of arr){const n=norm(x.en);m.set(n,(m.get(n)||0)+(+x.qty||1))}return m}
+let _repairing=false;
+async function repairMissingContainers(){if(_repairing||!S.coll||!S.canWrite||!S.db||!S.ready.decks)return;
+  const miss=deckList().filter(d=>isFrozen(d)&&!(d.list&&d.list.length));if(!miss.length)return;_repairing=true;
+  try{for(const h of (S.state&&S.state.history)||[]){if(!miss.length)break;let txt;try{const r=await fetch('/_blob/'+h.id);if(!r.ok)continue;txt=await r.text()}catch(e){continue}
+    const c=buildColl(parseCSV(txt).rows);const toList=cont=>{const out=[];for(const [,b] of c.byEn){const q=b.cont[cont];if(q)out.push({en:b.en,qty:q})}return out};
+    for(const d of [...miss]){if(!c.conts.has(d.container))continue;
+      await dbUpdate('decks/'+d.id,{list:toList(d.container),sideList:d.side&&c.conts.has(d.side)?toList(d.side):[],listFrom:h.name||'',listFromAt:h.uploadedAt||'',updatedAt:new Date().toISOString()});miss.splice(miss.indexOf(d),1)}}}
+  finally{_repairing=false}}
 function deckCards(d,side){const qm=deckQtyMap(d,side);const cmd=norm(d.commander);const out=[];
   for(const [n,q] of qm){const {b,card,key}=nameInfo(n);const en=(card&&card.e)||(b&&b.en)||n;
     const isCmd=!side&&!!cmd&&(n===cmd||norm(front(en))===cmd);
@@ -348,7 +357,7 @@ async function boot(){
   if(!db){S.noRuntime=true;render();return}
   const timer=setTimeout(()=>{S.slow=true;render()},10000);
   db.doc('app/state').onSnapshot(snap=>{clearTimeout(timer);S.slow=false;S.state=snap.exists?snap.data():null;S.ready.state=true;loadCsvFromState();render()},err=>{S.dbError=err.code;render()});
-  db.collection('decks').onSnapshot(q=>{S.decks={};q.docs.forEach(d=>S.decks[d.id]=d.data());S.ready.decks=true;_usage=null;render()},err=>{S.dbError=err.code;render()});
+  db.collection('decks').onSnapshot(q=>{S.decks={};q.docs.forEach(d=>S.decks[d.id]=d.data());S.ready.decks=true;_usage=null;render();repairMissingContainers()},err=>{S.dbError=err.code;render()});
   db.collection('swaps').onSnapshot(q=>{S.swaps={};q.docs.forEach(d=>S.swaps[d.id]=d.data());S.ready.swaps=true;render()},()=>{});
   let _exT=0;db.collection('cards_extra').onSnapshot(q=>{clearTimeout(_exT);_exT=setTimeout(()=>{S.extra={};q.docs.forEach(d=>{const v=d.data();if(v&&v.key)S.extra[v.key]=v});if(S.enr&&S.enr.running)return;rebuildIndex();if(S.coll)S.coll=buildColl(S.coll.rows);_usage=null;render()},500)},()=>{});
   db.doc('app/offres').onSnapshot(s=>{S.offres=s.exists?s.data():null;render()},()=>{});
@@ -356,7 +365,7 @@ async function boot(){
 let _loadingCsv=null;
 async function loadCsvFromState(){const id=S.state&&S.state.csv&&S.state.csv.id;if(!id||id===S.csvId||_loadingCsv===id)return;
   _loadingCsv=id;try{const r=await fetch('/_blob/'+id);if(!r.ok)throw new Error(r.status);const txt=await r.text();const p=parseCSV(txt);S.coll=buildColl(p.rows);S.csvId=id;_usage=null}catch(e){S.csvError='Le fichier CSV enregistré est introuvable ('+e.message+'). Réimporte ton export Mythic Tools.'}
-  _loadingCsv=null;render()}
+  _loadingCsv=null;render();repairMissingContainers()}
 
 /* ================= render ================= */
 let _raf=0;function render(){cancelAnimationFrame(_raf);_raf=requestAnimationFrame(doRender)}
@@ -410,7 +419,7 @@ function viewHome(){
       <span class="row" style="justify-content:space-between"><span class="pill">${esc(d.format||'Commander')}</span><span>${pips(st.id)}</span></span>
       <span class="nm">${esc(d.name)}</span>
       <span class="cm">${esc(cmd||'—')}</span>
-      <span class="meta"><span class="pill num">${st.total} cartes</span>${d.container?'<span class="pill">Mythic Tools</span>':'<span class="pill warn">Liste manuelle</span>'}${counts.pending?`<span class="pill acc">${counts.pending} swap${counts.pending>1?'s':''}</span>`:''}${counts.applied?`<span class="pill ok">${counts.applied} appliqué${counts.applied>1?'s':''}</span>`:''}${st.warns.length?`<span class="pill warn">${st.warns.length} alerte${st.warns.length>1?'s':''}</span>`:''}</span>
+      <span class="meta"><span class="pill num">${st.total} cartes</span>${isFrozen(d)?'<span class="pill warn">Classeur absent du CSV</span>':d.container?'<span class="pill">Mythic Tools</span>':'<span class="pill warn">Liste manuelle</span>'}${counts.pending?`<span class="pill acc">${counts.pending} swap${counts.pending>1?'s':''}</span>`:''}${counts.applied?`<span class="pill ok">${counts.applied} appliqué${counts.applied>1?'s':''}</span>`:''}${st.warns.length?`<span class="pill warn">${st.warns.length} alerte${st.warns.length>1?'s':''}</span>`:''}</span>
     </button>`}).join('');
   const diff=S.state&&S.state.lastDiff;
   return `<div class="stack">
@@ -446,10 +455,11 @@ function viewDeck(id){const d=S.decks[id];
       <div class="crumbs"><a href="#decks">Decks</a> <span class="muted">/</span></div>
       <h1>${esc(d.name)}</h1>
       <div class="row muted">${pips(st.id)} <span>${esc(d.format||'Commander')}</span>${cmd?`<span>· ${esc(cmd)}</span>`:''}${d.difficulty?`<span>· ${esc(d.difficulty)}</span>`:''}</div>
-      <div class="row">${d.container?`<span class="pill">Classeur Mythic Tools : ${esc(d.container)}</span>`:'<span class="pill warn">Liste manuelle (pas de classeur Mythic Tools)</span>'}${st.total!==expected?`<span class="pill warn num">${st.total}/${expected} cartes</span>`:`<span class="pill ok num">${st.total} cartes</span>`}</div>
+      <div class="row">${isFrozen(d)?`<span class="pill warn">Classeur « ${esc(d.container)} » absent du dernier CSV</span>`:d.container?`<span class="pill">Classeur Mythic Tools : ${esc(d.container)}</span>`:'<span class="pill warn">Liste manuelle (pas de classeur Mythic Tools)</span>'}${st.total!==expected?`<span class="pill warn num">${st.total}/${expected} cartes</span>`:`<span class="pill ok num">${st.total} cartes</span>`}</div>
     </div>
     <div class="row">${S.canWrite?`${!d.container?'<button class="btn small" data-act="editlist">Modifier la liste</button>':''}<button class="btn small" data-act="settings">Réglages</button>`:''}${S.sample&&S.canWrite?'<button class="btn primary" data-act="analyse">Réévaluer avec Claude</button>':''}</div></div>
     ${!S.coll&&d.container?'<div class="alert warn"><div class="grow">Importe ton CSV pour afficher les cartes de ce deck.</div></div>':''}
+    ${isFrozen(d)?`<div class="alert warn"><div class="grow">Le dernier export Mythic Tools ne contient plus le classeur <b>${esc(d.container)}</b>. ${d.list&&d.list.length?`Grimoire affiche la dernière liste connue${d.listFrom?` (import « ${esc(d.listFrom)} »${d.listFromAt?', '+esc(fmtDate(d.listFromAt)):''})`:''} ; ses cartes restent réservées dans le calcul de disponibilité.`:'Aucune liste antérieure n\'a été trouvée dans tes imports.'} Si le deck existe toujours, réexporte-le avec ses classeurs ; s'il est démonté, supprime-le dans Réglages.</div></div>`:''}
     <div class="deckgrid">
       <div class="stack">
         <div class="panel">${editable('strat','Stratégie',d.strat,'Décris le plan de jeu…')}</div>

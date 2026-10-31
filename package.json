@@ -1,7 +1,7 @@
 {
   "name": "grimoire",
   "productName": "Grimoire",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Grimoire - collection et decks Magic: The Gathering",
   "main": "main.js",
   "author": "Fred",
